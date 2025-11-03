@@ -7,12 +7,13 @@ import LoginPage from './pages/LoginPage'
 import SignupForm from './components/auth/SignupForm'
 import DashboardPage from './pages/DashboardPage'
 import ContactsPage from './pages/ContactsPage'
+import ContactDetailPage from './components/contacts/ContactsDetail'
+import EditContactPage from './pages/EditContactPage'
 import PipelinePage from './pages/PipelinePage'
 import TasksPage from './pages/TasksPage'
 import TaskForm from './components/tasks/TaskForm'
 import OpportunityForm from './components/pipeline/OpportunityForm'
 import ContactForm from './components/contacts/ContactForm'
-import ContactDetail from './components/contacts/ContactsDetail' 
 import AnalyticsPage from './pages/AnalyticsPage'
 import SettingsPage from './pages/SettingsPage'
 import NotFoundPage from './pages/404Page'
@@ -43,6 +44,9 @@ function App() {
             <Route index element={<DashboardPage />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="contacts" element={<ContactsPage />} />
+            {/* Add contact detail and edit routes inside layout */}
+            <Route path="contacts/:id" element={<ContactDetailPage />} />
+            <Route path="contacts/:id/edit" element={<EditContactPage />} />
             <Route path="pipeline" element={<PipelinePage />} />
             <Route path="tasks" element={<TasksPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
@@ -60,19 +64,7 @@ function App() {
               <OpportunityForm />
             </ProtectedRoute>
           } />
-          
-          {/* Contact Routes */}
           <Route path="/contacts/new" element={
-            <ProtectedRoute>
-              <ContactForm />
-            </ProtectedRoute>
-          } />
-          <Route path="/contacts/:id" element={
-            <ProtectedRoute>
-              <ContactDetail />
-            </ProtectedRoute>
-          } />
-          <Route path="/contacts/:id/edit" element={
             <ProtectedRoute>
               <ContactForm />
             </ProtectedRoute>

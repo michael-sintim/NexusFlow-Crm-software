@@ -11,6 +11,7 @@ export const useDataStore = create((set, get) => ({
    * CONTACTS
    * ===================== */
   contacts: [],
+  currentContact: null, // ADD THIS
   contactsLoading: false,
   contactsError: null,
 
@@ -44,44 +45,117 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  createContact: async (data) => {
+  // GET single contact
+  fetchContact: async (id) => {
+    set({ contactsLoading: true, contactsError: null });
     try {
-      await contactsAPI.create(data);
-      await get().fetchContacts();
+      const response = await contactsAPI.getById(id);
+      set({ currentContact: response.data, contactsLoading: false });
+      return response.data;
     } catch (error) {
-      console.error('Failed to create contact:', error);
+      set({
+        contactsError: error.response?.data || 'Failed to fetch contact',
+        contactsLoading: false,
+      });
       throw error;
     }
+  },
+
+  // CREATE contact
+  createContact: async (data) => {
+    set({ contactsLoading: true, contactsError: null });
+    try {
+      const response = await contactsAPI.create(data);
+      set(state => ({ 
+        contacts: [response.data, ...state.contacts],
+        contactsLoading: false 
+      }));
+      return response.data;
+    } catch (error) {
+      set({
+        contactsError: error.response?.data || 'Failed to create contact',
+        contactsLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  // UPDATE contact
+  updateContact: async (id, data) => {
+    set({ contactsLoading: true, contactsError: null });
+    try {
+      const response = await contactsAPI.update(id, data);
+      set(state => ({
+        contacts: state.contacts.map(contact => 
+          contact.id === id ? response.data : contact
+        ),
+        currentContact: response.data,
+        contactsLoading: false
+      }));
+      return response.data;
+    } catch (error) {
+      set({
+        contactsError: error.response?.data || 'Failed to update contact',
+        contactsLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  // DELETE contact
+  deleteContact: async (id) => {
+    set({ contactsLoading: true, contactsError: null });
+    try {
+      await contactsAPI.delete(id);
+      set(state => ({
+        contacts: state.contacts.filter(contact => contact.id !== id),
+        currentContact: state.currentContact?.id === id ? null : state.currentContact,
+        contactsLoading: false
+      }));
+    } catch (error) {
+      set({
+        contactsError: error.response?.data || 'Failed to delete contact',
+        contactsLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  // GET single contact (alias for fetchContact)
+  getContact: async (id) => {
+    return get().fetchContact(id);
   },
 
   updateLastContacted: async (contactId) => {
     try {
       console.log('DataStore: Updating last contacted for:', contactId);
       await contactsAPI.updateLastContacted(contactId);
-      console.log('DataStore: Update successful, fetching fresh contacts');
       
-      const freshContacts = await get().fetchContacts();
-      console.log('DataStore: Fresh contacts received:', freshContacts.length);
+      // Update local state immediately for better UX
+      set(state => ({
+        contacts: state.contacts.map(contact => 
+          contact.id === contactId 
+            ? { 
+                ...contact, 
+                last_contacted: new Date().toISOString(),
+                contacted: true 
+              }
+            : contact
+        )
+      }));
       
-      // Check if our updated contact is in the list
-      const updatedContact = freshContacts.find(c => c.id === contactId);
-      if (updatedContact) {
-        console.log('DataStore: Updated contact found:', {
-          id: updatedContact.id,
-          name: `${updatedContact.first_name} ${updatedContact.last_name}`,
-          last_contacted: updatedContact.last_contacted,
-          contacted: updatedContact.contacted
-        });
-      } else {
-        console.log('DataStore: Updated contact NOT found in fresh data');
-      }
-      
-      return freshContacts;
+      return contactId;
     } catch (error) {
       console.error('DataStore: Failed to update last contacted:', error);
       throw error;
     }
   },
+
+  // Clear current contact
+  clearCurrentContact: () => set({ currentContact: null }),
+
+  // Clear contacts error
+  clearContactsError: () => set({ contactsError: null }),
 
   /* =====================
    * OPPORTUNITIES

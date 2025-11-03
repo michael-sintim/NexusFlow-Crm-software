@@ -1,14 +1,21 @@
 import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Edit, Mail, Phone, Building, Calendar, User, MapPin, Globe, FileText } from 'lucide-react'
+import { ArrowLeft, Edit, Mail, Phone, Building, Calendar, User, Globe, FileText, Trash2 } from 'lucide-react'
 import { useDataStore } from '../../store/dataStore'
-import Button from '../../components/ui/Button'
+import Button from '../ui/Button'
 
-const ContactDetail = () => {
+const ContactDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { fetchContact, deleteContact, contactsLoading, contactsError } = useDataStore()
-  const [contact, setContact] = React.useState(null)
+  const { 
+    currentContact, 
+    fetchContact, 
+    deleteContact, 
+    contactsLoading, 
+    contactsError,
+    clearCurrentContact
+  } = useDataStore()
+  
   const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
@@ -17,11 +24,11 @@ const ContactDetail = () => {
     const loadContact = async () => {
       try {
         setIsLoading(true)
-        const contactData = await fetchContact(id)
-        setContact(contactData)
+        setError(null)
+        await fetchContact(id)
       } catch (error) {
-        setError('Failed to load contact details')
         console.error('Error loading contact:', error)
+        setError('Failed to load contact details. Please try again.')
       } finally {
         setIsLoading(false)
       }
@@ -30,23 +37,32 @@ const ContactDetail = () => {
     if (id) {
       loadContact()
     }
-  }, [id, fetchContact])
+
+    // Clear current contact when component unmounts
+    return () => {
+      clearCurrentContact()
+    }
+  }, [id, fetchContact, clearCurrentContact])
 
   const handleDelete = async () => {
-    if (!window.confirm(`Are you sure you want to delete ${contact.first_name} ${contact.last_name}? This action cannot be undone.`)) {
+    if (!window.confirm(`Are you sure you want to delete ${currentContact?.first_name} ${currentContact?.last_name}? This action cannot be undone.`)) {
       return
     }
 
     setIsDeleting(true)
     try {
-      await deleteContact(contact.id)
+      await deleteContact(id)
       navigate('/contacts')
     } catch (error) {
       console.error('Failed to delete contact:', error)
-      alert('Failed to delete contact. Please try again.')
+      setError('Failed to delete contact. Please try again.')
     } finally {
       setIsDeleting(false)
     }
+  }
+
+  const handleEdit = () => {
+    navigate(`/contacts/${id}/edit`)
   }
 
   if (isLoading) {
@@ -75,7 +91,7 @@ const ContactDetail = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
+              {[1, 2, 3, 4, 5, 6].map(n => (
                 <div key={n} className="space-y-2">
                   <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
                   <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
@@ -88,7 +104,7 @@ const ContactDetail = () => {
     )
   }
 
-  if (error || !contact) {
+  if (error || !currentContact) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -109,7 +125,7 @@ const ContactDetail = () => {
               {error || 'Contact Not Found'}
             </h3>
             <p className="text-red-600 dark:text-red-300 mb-6">
-              {error ? 'We encountered an error while loading the contact details.' : 'The contact you are looking for does not exist or has been deleted.'}
+              {error ? error : 'The contact you are looking for does not exist or has been deleted.'}
             </p>
             <Button onClick={() => navigate('/contacts')}>
               Return to Contacts
@@ -120,8 +136,12 @@ const ContactDetail = () => {
     )
   }
 
-  const fullName = `${contact.first_name} ${contact.last_name}`
-  const initials = `${contact.first_name[0]}${contact.last_name[0]}`.toUpperCase()
+  const fullName = `${currentContact.first_name} ${currentContact.last_name}`
+  const initials = `${currentContact.first_name[0]}${currentContact.last_name[0]}`.toUpperCase()
+
+  const formatSource = (source) => {
+    return source.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
@@ -153,10 +173,11 @@ const ContactDetail = () => {
               disabled={isDeleting || contactsLoading}
               className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
             >
+              <Trash2 className="h-4 w-4 mr-2" />
               {isDeleting ? 'Deleting...' : 'Delete Contact'}
             </Button>
             <Button
-              onClick={() => navigate(`/contacts/${contact.id}/edit`)}
+              onClick={handleEdit}
             >
               <Edit className="h-4 w-4 mr-2" />
               Edit Contact
@@ -174,11 +195,11 @@ const ContactDetail = () => {
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-white">{fullName}</h2>
-                <p className="text-blue-100 mt-1">{contact.title || 'No title specified'}</p>
-                {contact.company_name && (
+                <p className="text-blue-100 mt-1">{currentContact.title || 'No title specified'}</p>
+                {currentContact.company_name && (
                   <p className="text-blue-100 flex items-center mt-1">
                     <Building className="h-4 w-4 mr-2" />
-                    {contact.company_name}
+                    {currentContact.company_name}
                   </p>
                 )}
               </div>
@@ -208,18 +229,18 @@ const ContactDetail = () => {
                     <div className="text-right">
                       <div className="flex items-center justify-end space-x-2 text-sm text-gray-900 dark:text-white">
                         <Mail className="h-4 w-4" />
-                        <span>{contact.email}</span>
+                        <span>{currentContact.email}</span>
                       </div>
                     </div>
                   </div>
                   
-                  {contact.phone_number && (
+                  {currentContact.phone_number && (
                     <div className="flex justify-between items-start py-3 border-b border-gray-200 dark:border-gray-700">
                       <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</span>
                       <div className="text-right">
                         <div className="flex items-center justify-end space-x-2 text-sm text-gray-900 dark:text-white">
                           <Phone className="h-4 w-4" />
-                          <span>{contact.phone_number}</span>
+                          <span>{currentContact.phone_number}</span>
                         </div>
                       </div>
                     </div>
@@ -235,22 +256,22 @@ const ContactDetail = () => {
                 </h3>
                 
                 <div className="space-y-4">
-                  {contact.company_name && (
+                  {currentContact.company_name && (
                     <div className="flex justify-between items-start py-3 border-b border-gray-200 dark:border-gray-700">
                       <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Company</span>
                       <div className="text-right">
                         <div className="flex items-center justify-end space-x-2 text-sm text-gray-900 dark:text-white">
                           <Building className="h-4 w-4" />
-                          <span>{contact.company_name}</span>
+                          <span>{currentContact.company_name}</span>
                         </div>
                       </div>
                     </div>
                   )}
                   
-                  {contact.title && (
+                  {currentContact.title && (
                     <div className="flex justify-between items-start py-3 border-b border-gray-200 dark:border-gray-700">
                       <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Job Title</span>
-                      <span className="text-sm text-gray-900 dark:text-white">{contact.title}</span>
+                      <span className="text-sm text-gray-900 dark:text-white">{currentContact.title}</span>
                     </div>
                   )}
                   
@@ -259,7 +280,7 @@ const ContactDetail = () => {
                     <div className="text-right">
                       <div className="flex items-center justify-end space-x-2 text-sm text-gray-900 dark:text-white">
                         <Globe className="h-4 w-4" />
-                        <span className="capitalize">{contact.source?.replace('_', ' ') || 'other'}</span>
+                        <span className="capitalize">{formatSource(currentContact.source)}</span>
                       </div>
                     </div>
                   </div>
@@ -268,7 +289,7 @@ const ContactDetail = () => {
             </div>
 
             {/* Notes Section */}
-            {contact.notes && (
+            {currentContact.notes && (
               <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center mb-4">
                   <FileText className="h-5 w-5 mr-2 text-blue-500" />
@@ -276,7 +297,7 @@ const ContactDetail = () => {
                 </h3>
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                    {contact.notes}
+                    {currentContact.notes}
                   </p>
                 </div>
               </div>
@@ -291,8 +312,8 @@ const ContactDetail = () => {
                   <div>
                     <div className="font-medium">Last Contacted</div>
                     <div className="text-gray-900 dark:text-white">
-                      {contact.last_contacted 
-                        ? new Date(contact.last_contacted).toLocaleDateString('en-US', {
+                      {currentContact.last_contacted 
+                        ? new Date(currentContact.last_contacted).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric'
@@ -308,7 +329,7 @@ const ContactDetail = () => {
                   <div>
                     <div className="font-medium">Created</div>
                     <div className="text-gray-900 dark:text-white">
-                      {new Date(contact.created_at).toLocaleDateString('en-US', {
+                      {new Date(currentContact.created_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
@@ -322,7 +343,7 @@ const ContactDetail = () => {
                   <div>
                     <div className="font-medium">Last Updated</div>
                     <div className="text-gray-900 dark:text-white">
-                      {new Date(contact.updated_at).toLocaleDateString('en-US', {
+                      {new Date(currentContact.updated_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
@@ -339,4 +360,4 @@ const ContactDetail = () => {
   )
 }
 
-export default ContactDetail
+export default ContactDetailPage
