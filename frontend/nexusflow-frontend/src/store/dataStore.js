@@ -11,7 +11,7 @@ export const useDataStore = create((set, get) => ({
    * CONTACTS
    * ===================== */
   contacts: [],
-  currentContact: null, // ADD THIS
+  currentContact: null,
   contactsLoading: false,
   contactsError: null,
 
@@ -193,9 +193,10 @@ export const useDataStore = create((set, get) => ({
   },
 
   /* =====================
-   * TASKS
+   * TASKS - UPDATED WITH COMPLETE CRUD
    * ===================== */
   tasks: [],
+  currentTask: null,
   tasksLoading: false,
   tasksError: null,
 
@@ -217,15 +218,130 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  createTask: async (data) => {
+  // GET single task
+  fetchTask: async (id) => {
+    set({ tasksLoading: true, tasksError: null });
     try {
-      await tasksAPI.create(data);
-      await get().fetchTasks();
+      const response = await tasksAPI.getById(id);
+      set({ currentTask: response.data, tasksLoading: false });
+      return response.data;
     } catch (error) {
-      console.error('Failed to create task:', error);
+      set({
+        tasksError: error.response?.data || 'Failed to fetch task',
+        tasksLoading: false,
+      });
       throw error;
     }
   },
+
+  // CREATE task
+  createTask: async (data) => {
+    set({ tasksLoading: true, tasksError: null });
+    try {
+      const response = await tasksAPI.create(data);
+      set(state => ({ 
+        tasks: [response.data, ...state.tasks],
+        tasksLoading: false 
+      }));
+      return response.data;
+    } catch (error) {
+      set({
+        tasksError: error.response?.data || 'Failed to create task',
+        tasksLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  // UPDATE task
+  updateTask: async (id, data) => {
+    set({ tasksLoading: true, tasksError: null });
+    try {
+      const response = await tasksAPI.update(id, data);
+      set(state => ({
+        tasks: state.tasks.map(task => 
+          task.id === id ? response.data : task
+        ),
+        currentTask: response.data,
+        tasksLoading: false
+      }));
+      return response.data;
+    } catch (error) {
+      set({
+        tasksError: error.response?.data || 'Failed to update task',
+        tasksLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  // DELETE task
+  deleteTask: async (id) => {
+    set({ tasksLoading: true, tasksError: null });
+    try {
+      await tasksAPI.delete(id);
+      set(state => ({
+        tasks: state.tasks.filter(task => task.id !== id),
+        currentTask: state.currentTask?.id === id ? null : state.currentTask,
+        tasksLoading: false
+      }));
+    } catch (error) {
+      set({
+        tasksError: error.response?.data || 'Failed to delete task',
+        tasksLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  // COMPLETE task
+  complete: async (taskId) => {
+    try {
+      await tasksAPI.complete(taskId);
+      // Update local state
+      set(state => ({
+        tasks: state.tasks.map(task => 
+          task.id === taskId ? { ...task, status: 'completed' } : task
+        ),
+        currentTask: state.currentTask?.id === taskId 
+          ? { ...state.currentTask, status: 'completed' }
+          : state.currentTask
+      }));
+    } catch (error) {
+      console.error('Failed to complete task:', error);
+      throw error;
+    }
+  },
+
+  // START task
+  start: async (taskId) => {
+    try {
+      await tasksAPI.start(taskId);
+      // Update local state
+      set(state => ({
+        tasks: state.tasks.map(task => 
+          task.id === taskId ? { ...task, status: 'in_progress' } : task
+        ),
+        currentTask: state.currentTask?.id === taskId 
+          ? { ...state.currentTask, status: 'in_progress' }
+          : state.currentTask
+      }));
+    } catch (error) {
+      console.error('Failed to start task:', error);
+      throw error;
+    }
+  },
+
+  // GET single task (alias for fetchTask)
+  getTask: async (id) => {
+    return get().fetchTask(id);
+  },
+
+  // Clear current task
+  clearCurrentTask: () => set({ currentTask: null }),
+
+  // Clear tasks error
+  clearTasksError: () => set({ tasksError: null }),
 
   /* =====================
    * ANALYTICS

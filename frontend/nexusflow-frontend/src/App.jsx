@@ -12,6 +12,7 @@ import EditContactPage from './pages/EditContactPage'
 import PipelinePage from './pages/PipelinePage'
 import TasksPage from './pages/TasksPage'
 import TaskForm from './components/tasks/TaskForm'
+import TaskDetail from './components/tasks/TaskDetail' // ADD THIS IMPORT
 import OpportunityForm from './components/pipeline/OpportunityForm'
 import ContactForm from './components/contacts/ContactForm'
 import AnalyticsPage from './pages/AnalyticsPage'
@@ -49,12 +50,20 @@ function App() {
             <Route path="contacts/:id/edit" element={<EditContactPage />} />
             <Route path="pipeline" element={<PipelinePage />} />
             <Route path="tasks" element={<TasksPage />} />
+            {/* ADD TASK DETAIL ROUTE INSIDE LAYOUT */}
+            <Route path="tasks/:id" element={<TaskDetail />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
 
           {/* Standalone Protected Routes (without Layout) */}
           <Route path="/tasks/new" element={
+            <ProtectedRoute>
+              <TaskForm />
+            </ProtectedRoute>
+          } />
+          {/* ADD TASK EDIT ROUTE */}
+          <Route path="/tasks/:id/edit" element={
             <ProtectedRoute>
               <TaskForm />
             </ProtectedRoute>

@@ -20,28 +20,10 @@ const TaskList = ({ tasks }) => {
     )
   }
 
-  // Group tasks by status
-  const groupedTasks = {
-    open: tasks.filter(task => task.status === 'open'),
-    in_progress: tasks.filter(task => task.status === 'in_progress'),
-    completed: tasks.filter(task => task.status === 'completed'),
-  }
-
   return (
-    <div className="space-y-6">
-      {Object.entries(groupedTasks).map(([status, statusTasks]) => (
-        statusTasks.length > 0 && (
-          <div key={status}>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 capitalize">
-              {status.replace('_', ' ')} ({statusTasks.length})
-            </h3>
-            <div className="space-y-3">
-              {statusTasks.map((task) => (
-                <TaskItem key={task.id} task={task} />
-              ))}
-            </div>
-          </div>
-        )
+    <div className="space-y-4">
+      {tasks.map((task) => (
+        <TaskItem key={task.id} task={task} />
       ))}
     </div>
   )
