@@ -22,6 +22,12 @@ const ContactsPage = () => {
     fetchContacts()
   }, [fetchContacts])
 
+  // ADD THIS NEW HANDLER - This will refresh contacts after updates
+  const handleContactUpdate = React.useCallback(async () => {
+    console.log('ContactsPage: Refreshing contacts after update')
+    await fetchContacts()
+  }, [fetchContacts])
+
   // Safely handle contacts data - ensure it's always an array
   const contactsArray = React.useMemo(() => {
     if (!contacts) return []
@@ -56,10 +62,10 @@ const ContactsPage = () => {
           contact?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           contact?.company_name?.toLowerCase().includes(searchTerm.toLowerCase())
 
-        // Status filter - contacted vs not contacted
+        // Status filter - contacted vs not contacted (using contacted boolean field)
         const matchesStatus = !filters.status || 
           (filters.status === 'contacted' && contact?.contacted === true) ||
-          (filters.status === 'not_contacted' && (contact?.contacted === false || contact?.contacted === undefined))
+          (filters.status === 'not_contacted' && contact?.contacted === false)
 
         // Company filter
         const matchesCompany = !filters.company || 
@@ -513,7 +519,12 @@ const ContactsPage = () => {
       )}
 
       {/* Contacts List - Only show when we have contacts and no active search/filter with no results */}
-      {!hasSearchResults && !hasFilterResults && <ContactList contacts={filteredContacts} />}
+      {!hasSearchResults && !hasFilterResults && (
+        <ContactList 
+          contacts={filteredContacts} 
+          onContactUpdate={handleContactUpdate}
+        />
+      )}
     </div>
   )
 }

@@ -1,16 +1,20 @@
 import React from 'react'
-import { Mail, Phone, Building, Calendar, MoreVertical, Edit, Trash2 } from 'lucide-react'
+import { Mail, Phone, Building, Calendar, MoreVertical } from 'lucide-react'
 import { formatDate } from '../../lib/utils'
 import { useDataStore } from '../../store/dataStore'
 
-const ContactCard = ({ contact }) => {
+const ContactCard = ({ contact, onUpdate }) => {
   const { updateLastContacted } = useDataStore()
 
   const handleUpdateLastContacted = async () => {
     try {
+      console.log('ContactCard: Updating last contacted for:', contact.id)
       await updateLastContacted(contact.id)
+      console.log('ContactCard: Update successful, calling onUpdate')
+      // ADD THIS LINE - refresh the parent component
+      if (onUpdate) onUpdate()
     } catch (error) {
-      console.error('Failed to update last contacted:', error)
+      console.error('ContactCard: Failed to update last contacted:', error)
     }
   }
 

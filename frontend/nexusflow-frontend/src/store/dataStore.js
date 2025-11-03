@@ -21,6 +21,18 @@ export const useDataStore = create((set, get) => ({
       
       // Handle paginated response format
       const contactsData = response.data.results || response.data;
+      console.log('DataStore: Fetched contacts:', contactsData.length);
+      
+      // Debug: Check if contacted field exists
+      if (contactsData.length > 0) {
+        console.log('DataStore: Sample contact with contacted field:', {
+          id: contactsData[0].id,
+          name: `${contactsData[0].first_name} ${contactsData[0].last_name}`,
+          last_contacted: contactsData[0].last_contacted,
+          contacted: contactsData[0].contacted
+        });
+      }
+      
       set({ contacts: contactsData, contactsLoading: false });
       return contactsData;
     } catch (error) {
@@ -44,10 +56,29 @@ export const useDataStore = create((set, get) => ({
 
   updateLastContacted: async (contactId) => {
     try {
+      console.log('DataStore: Updating last contacted for:', contactId);
       await contactsAPI.updateLastContacted(contactId);
-      await get().fetchContacts();
+      console.log('DataStore: Update successful, fetching fresh contacts');
+      
+      const freshContacts = await get().fetchContacts();
+      console.log('DataStore: Fresh contacts received:', freshContacts.length);
+      
+      // Check if our updated contact is in the list
+      const updatedContact = freshContacts.find(c => c.id === contactId);
+      if (updatedContact) {
+        console.log('DataStore: Updated contact found:', {
+          id: updatedContact.id,
+          name: `${updatedContact.first_name} ${updatedContact.last_name}`,
+          last_contacted: updatedContact.last_contacted,
+          contacted: updatedContact.contacted
+        });
+      } else {
+        console.log('DataStore: Updated contact NOT found in fresh data');
+      }
+      
+      return freshContacts;
     } catch (error) {
-      console.error('Failed to update last contacted:', error);
+      console.error('DataStore: Failed to update last contacted:', error);
       throw error;
     }
   },
@@ -159,8 +190,4 @@ export const useDataStore = create((set, get) => ({
       throw error;
     }
   },
-
-  // =====================
-  // NOTIFICATIONS SECTION REMOVED
-  // =====================
 }));

@@ -19,15 +19,20 @@ class TagSerializer(serializers.ModelSerializer):
 class ContactListSerializer(serializers.ModelSerializer):
     owner_name = serializers.CharField(source='owner.get_full_name', read_only=True)
     tags = TagSerializer(many=True, read_only=True)
+    contacted = serializers.SerializerMethodField()  # ADD THIS FIELD
     
     class Meta:
         model = Contact
         fields = [
             'id', 'first_name', 'last_name', 'email', 'company_name',
             'phone_number', 'title', 'source', 'owner_name', 'tags',
-            'last_contacted', 'created_at'
+            'last_contacted', 'contacted', 'created_at'  # ADD contacted HERE
         ]
         read_only_fields = ['id', 'created_at']
+    
+    def get_contacted(self, obj):
+        # Returns True if last_contacted is not None
+        return obj.last_contacted is not None
 
 
 class ContactDetailSerializer(serializers.ModelSerializer):
@@ -42,16 +47,21 @@ class ContactDetailSerializer(serializers.ModelSerializer):
     )
     opportunity_count = serializers.SerializerMethodField()
     task_count = serializers.SerializerMethodField()
+    contacted = serializers.SerializerMethodField()  # ADD THIS FIELD
     
     class Meta:
         model = Contact
         fields = [
             'id', 'owner', 'company_name', 'first_name', 'last_name',
             'email', 'phone_number', 'title', 'source', 'notes',
-            'tags', 'tag_ids', 'last_contacted', 'opportunity_count',
+            'tags', 'tag_ids', 'last_contacted', 'contacted', 'opportunity_count',  # ADD contacted HERE
             'task_count', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'owner', 'created_at', 'updated_at']
+    
+    def get_contacted(self, obj):
+        # Returns True if last_contacted is not None
+        return obj.last_contacted is not None
     
     def get_opportunity_count(self, obj):
         return obj.opportunities.count()
