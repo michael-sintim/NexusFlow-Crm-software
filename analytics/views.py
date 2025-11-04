@@ -144,6 +144,7 @@ class AnalyticsViewSet(viewsets.ViewSet):
         }
         
         serializer = DashboardStatsSerializer(stats)
+
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'])

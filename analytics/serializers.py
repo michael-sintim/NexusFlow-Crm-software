@@ -13,12 +13,7 @@ class DashboardStatsSerializer(serializers.Serializer):
     total_contacts = serializers.IntegerField()
     total_opportunities = serializers.IntegerField()
     total_value = serializers.FloatField()
-    open_tasks = serializers.IntegerField()
     closed_won = serializers.IntegerField()
-    closed_won_value = serializers.FloatField()
-    avg_deal_size = serializers.FloatField()
-    win_rate = serializers.FloatField()
-    active_opportunities = serializers.IntegerField()
     
     # Previous period (days 31-60 ago) - for comparison
     previous_total_contacts = serializers.IntegerField()
@@ -26,15 +21,15 @@ class DashboardStatsSerializer(serializers.Serializer):
     previous_total_value = serializers.FloatField()
     previous_closed_won = serializers.IntegerField()
     
-    # All-time metrics
+    # All-time metrics (matching the view's field names)
     all_time_contacts = serializers.IntegerField()
     all_time_opportunities = serializers.IntegerField()
     all_time_value = serializers.FloatField()
-    all_time_closed_won_value = serializers.FloatField()
-    all_time_avg_deal_size = serializers.FloatField()
-    all_time_win_rate = serializers.FloatField()
-    all_time_active_opportunities = serializers.IntegerField()
-    all_time_open_tasks = serializers.IntegerField()
+    closed_won_value = serializers.FloatField()  # Note: no "all_time_" prefix
+    avg_deal_size = serializers.FloatField()  # Note: no "all_time_" prefix
+    win_rate = serializers.FloatField()  # Note: no "all_time_" prefix
+    active_opportunities = serializers.IntegerField()  # Note: no "all_time_" prefix
+    open_tasks = serializers.IntegerField()  # Note: no "all_time_" prefix
 
 class PipelineStageSerializer(serializers.Serializer):
     stage = serializers.CharField()
@@ -54,7 +49,6 @@ class ForecastSerializer(serializers.Serializer):
 class TeamPerformanceSerializer(serializers.Serializer):
     user_id = serializers.UUIDField()
     username = serializers.CharField()
-    full_name = serializers.CharField()
     total_opportunities = serializers.IntegerField()
     total_value = serializers.FloatField()
     closed_won = serializers.IntegerField()

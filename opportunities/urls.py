@@ -9,3 +9,4 @@ urlpatterns = [
     path('opportunities/upcoming_closes/', OpportunityViewSet.as_view({'get': 'upcoming_closes'})),
     path('opportunities/<uuid:pk>/update_stage/', OpportunityViewSet.as_view({'post': 'update_stage'})),
 ]
+
