@@ -4,11 +4,11 @@ import { useUIStore } from '../store/uiStore'
 import { useAuth } from '../hooks/useAuth'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
-import { authAPI } from '../services/api' // Use your API service
+import { authAPI } from '../services/api'
 
 const SettingsPage = () => {
   const { theme, toggleTheme } = useUIStore()
-  const { user, logout } = useAuth()
+  const { user, logout, updateProfile } = useAuth() // Added updateProfile from useAuth
   const [activeTab, setActiveTab] = React.useState('profile')
   const [loading, setLoading] = React.useState(false)
   const [msg, setMsg] = React.useState('')
@@ -26,6 +26,15 @@ const SettingsPage = () => {
     confirm_password: ''
   })
 
+  // Update local profile state when user data changes
+  React.useEffect(() => {
+    setProfile({
+      first_name: user?.first_name || '',
+      last_name: user?.last_name || '',
+      email: user?.email || ''
+    })
+  }, [user])
+
   const tabs = [
     { id: 'profile', name: 'Profile', icon: User },
     { id: 'preferences', name: 'Preferences', icon: Bell },
@@ -37,9 +46,13 @@ const SettingsPage = () => {
     setLoading(true)
     setMsg('')
     try {
-      // Use your authAPI service - it already has the correct base URL
-      await authAPI.updateProfile(profile)
+      // Use the updateProfile from useAuth hook which updates the global state
+      await updateProfile(profile)
       setMsg('Profile updated successfully')
+      
+      // No need to manually update anything - the useAuth hook already updates the global store
+      // which will automatically reflect in the header and everywhere else
+      
     } catch (err) {
       setMsg(err.response?.data?.detail || 'Failed to update profile')
     }
@@ -55,7 +68,6 @@ const SettingsPage = () => {
     setLoading(true)
     setMsg('')
     try {
-      // Use your authAPI service - it already has the correct base URL
       await authAPI.changePassword(passwords)
       setMsg('Password changed successfully')
       setPasswords({ current_password: '', new_password: '', confirm_password: '' })
@@ -78,6 +90,15 @@ const SettingsPage = () => {
 
   const handleNotifToggle = () => {
     setEmailNotifs(!emailNotifs)
+  }
+
+  // Check if profile has changes
+  const hasProfileChanges = () => {
+    return (
+      profile.first_name !== user?.first_name ||
+      profile.last_name !== user?.last_name ||
+      profile.email !== user?.email
+    )
   }
 
   return (
@@ -156,7 +177,10 @@ const SettingsPage = () => {
               </div>
 
               <div className="flex justify-end mt-6">
-                <Button onClick={handleProfileSave} disabled={loading}>
+                <Button 
+                  onClick={handleProfileSave} 
+                  disabled={loading || !hasProfileChanges()}
+                >
                   {loading ? 'Saving...' : 'Save Changes'}
                 </Button>
               </div>
