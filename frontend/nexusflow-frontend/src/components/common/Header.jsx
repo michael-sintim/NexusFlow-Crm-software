@@ -6,7 +6,7 @@ import { useDataStore } from '../../store/dataStore'
 
 const Header = () => {
   const { theme, toggleTheme } = useUIStore()
-  const { user, logout } = useAuth()
+  const { user, logout } = useAuth() // This will automatically update when user data changes
   const { unreadCount, notifications } = useDataStore()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
@@ -21,6 +21,20 @@ const Header = () => {
 
   const handleCancelLogout = () => {
     setShowLogoutModal(false)
+  }
+
+  // Get user initials for avatar - this will update automatically
+  const getUserInitials = () => {
+    if (!user) return 'U'
+    const first = user.first_name?.[0] || ''
+    const last = user.last_name?.[0] || ''
+    return `${first}${last}`.toUpperCase() || 'U'
+  }
+
+  // Get full name for display - this will update automatically
+  const getFullName = () => {
+    if (!user) return 'User'
+    return `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User'
   }
 
   return (
@@ -64,14 +78,14 @@ const Header = () => {
             <div className="flex items-center space-x-3 border-l border-gray-200 dark:border-gray-700 pl-4">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
-                  {user?.first_name?.[0]}{user?.last_name?.[0]}
+                  {getUserInitials()}
                 </div>
                 <div className="hidden md:block text-left">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {user?.first_name} {user?.last_name}
+                    {getFullName()}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                    {user?.role}
+                    {user?.role || 'User'}
                   </p>
                 </div>
               </div>

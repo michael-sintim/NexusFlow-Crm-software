@@ -22,7 +22,9 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token')
-    if (token) config.headers.Authorization = `Bearer ${token}`
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
     return config
   },
   (error) => Promise.reject(error)
@@ -41,7 +43,7 @@ api.interceptors.response.use(
 
       if (refreshToken) {
         try {
-          const { data } = await axios.post(`${BASE_URL}/auth/refresh_token/`, {
+          const { data } = await api.post('/auth/refresh_token/', {
             refresh: refreshToken,
           })
           localStorage.setItem('access_token', data.access)
@@ -49,7 +51,8 @@ api.interceptors.response.use(
           return api(originalRequest)
         } catch {
           // If refresh fails → logout user
-          localStorage.clear()
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
           window.location.href = '/login'
         }
       }
@@ -74,26 +77,24 @@ const del = (url) => api.delete(url)
 // ==============================
 
 export const authAPI = {
+  // Authentication
   login: (credentials) => post('/auth/login/', credentials),
   register: (userData) => post('/auth/register/', userData),
   refreshToken: (refresh) => post('/auth/refresh_token/', { refresh }),
+  
+  // User profile
   getProfile: () => get('/auth/me/'),
   updateProfile: (data) => put('/auth/update_profile/', data),
   changePassword: (data) => post('/auth/change_password/', data),
-}
-
-// ==============================
-// 👥 USERS API
-// ==============================
-
-export const usersAPI = {
-  getAll: () => get('/accounts/users/'),
-  getById: (id) => get(`/accounts/users/${id}/`),
-  create: (data) => post('/accounts/users/', data),
-  update: (id, data) => put(`/accounts/users/${id}/`, data),
-  delete: (id) => del(`/accounts/users/${id}/`),
-  deactivate: (id) => post(`/accounts/users/${id}/deactivate/`),
-  activate: (id) => post(`/accounts/users/${id}/activate/`),
+  
+  // User management (admin)
+  getUsers: () => get('/auth/users/'),
+  getUser: (id) => get(`/auth/users/${id}/`),
+  createUser: (data) => post('/auth/users/create/', data),
+  updateUser: (id, data) => put(`/auth/users/${id}/update/`, data),
+  deleteUser: (id) => del(`/auth/users/${id}/delete/`),
+  deactivateUser: (id) => post(`/auth/users/${id}/deactivate/`),
+  activateUser: (id) => post(`/auth/users/${id}/activate/`),
 }
 
 // ==============================
@@ -101,25 +102,23 @@ export const usersAPI = {
 // ==============================
 
 export const contactsAPI = {
-  getAll: (params) => get('/contacts/contacts/', params),
+  // Contacts CRUD
+  getAll: (params = {}) => get('/contacts/contacts/', params),
   getById: (id) => get(`/contacts/contacts/${id}/`),
   create: (data) => post('/contacts/contacts/', data),
   update: (id, data) => put(`/contacts/contacts/${id}/`, data),
   delete: (id) => del(`/contacts/contacts/${id}/`),
+  
+  // Contact actions
   getStats: () => get('/contacts/contacts/stats/'),
   updateLastContacted: (id) => post(`/contacts/contacts/${id}/update_last_contacted/`),
-}
-
-// ==============================
-// 🏷️ TAGS API
-// ==============================
-
-export const tagsAPI = {
-  getAll: () => get('/contacts/tags/'),
-  getPopular: () => get('/contacts/tags/popular/'),
-  create: (data) => post('/contacts/tags/', data),
-  update: (id, data) => put(`/contacts/tags/${id}/`, data),
-  delete: (id) => del(`/contacts/tags/${id}/`),
+  
+  // Tags
+  getTags: () => get('/contacts/tags/'),
+  getPopularTags: () => get('/contacts/tags/popular/'),
+  createTag: (data) => post('/contacts/tags/', data),
+  updateTag: (id, data) => put(`/contacts/tags/${id}/`, data),
+  deleteTag: (id) => del(`/contacts/tags/${id}/`),
 }
 
 // ==============================
@@ -127,14 +126,21 @@ export const tagsAPI = {
 // ==============================
 
 export const opportunitiesAPI = {
-  getAll: (params) => get('/opportunities/opportunities/', params),
+  // Opportunities CRUD
+  getAll: (params = {}) => get('/opportunities/opportunities/', params),
   getById: (id) => get(`/opportunities/opportunities/${id}/`),
   create: (data) => post('/opportunities/opportunities/', data),
   update: (id, data) => put(`/opportunities/opportunities/${id}/`, data),
   delete: (id) => del(`/opportunities/opportunities/${id}/`),
+  
+  // Pipeline management
   getPipeline: () => get('/opportunities/opportunities/pipeline/'),
   getUpcomingCloses: () => get('/opportunities/opportunities/upcoming_closes/'),
   updateStage: (id, stage) => post(`/opportunities/opportunities/${id}/update_stage/`, { stage }),
+  
+  // Analytics
+  getForecast: () => get('/opportunities/opportunities/forecast/'),
+  getStageMetrics: () => get('/opportunities/opportunities/stage_metrics/'),
 }
 
 // ==============================
@@ -142,25 +148,38 @@ export const opportunitiesAPI = {
 // ==============================
 
 export const tasksAPI = {
-  getAll: (params) => get('/tasks/tasks/', params),
+  // Tasks CRUD
+  getAll: (params = {}) => get('/tasks/tasks/', params),
   getById: (id) => get(`/tasks/tasks/${id}/`),
   create: (data) => post('/tasks/tasks/', data),
   update: (id, data) => put(`/tasks/tasks/${id}/`, data),
   delete: (id) => del(`/tasks/tasks/${id}/`),
-  getMyTasks: (params) => get('/tasks/tasks/my_tasks/', params),
+  
+  // Task management
+  getMyTasks: (params = {}) => get('/tasks/tasks/my_tasks/', params),
   getOverdue: () => get('/tasks/tasks/overdue/'),
   complete: (id) => patch(`/tasks/tasks/${id}/complete/`),
   start: (id) => patch(`/tasks/tasks/${id}/start/`),
+  
+  // Task analytics
   getDashboardStats: () => get('/tasks/tasks/dashboard_stats/'),
+  getTaskMetrics: () => get('/tasks/tasks/metrics/'),
 }
 
 // ==============================
-// 🔔 ACTIVITY LOGS API
+// 🔔 ACTIVITY & NOTIFICATIONS API
 // ==============================
 
 export const activityAPI = {
-  getAll: (params) => get('/notifications/activity-logs/', params),
+  // Activity logs
+  getAll: (params = {}) => get('/notifications/activity-logs/', params),
   getRecent: () => get('/notifications/activity-logs/recent_activity/'),
+  
+  // Notifications
+  getNotifications: () => get('/notifications/notifications/'),
+  markAsRead: (id) => patch(`/notifications/notifications/${id}/mark_read/`),
+  markAllAsRead: () => post('/notifications/notifications/mark_all_read/'),
+  getUnreadCount: () => get('/notifications/notifications/unread_count/'),
 }
 
 // ==============================
@@ -168,25 +187,78 @@ export const activityAPI = {
 // ==============================
 
 export const analyticsAPI = {
+  // Dashboard
   getDashboard: () => get('/analytics/dashboard/'),
   getPipeline: () => get('/analytics/pipeline/'),
   getForecast: () => get('/analytics/forecast/'),
+  
+  // Performance
   getTeamPerformance: () => get('/analytics/team_performance/'),
   getActivityTrends: () => get('/analytics/activity_trends/'),
   getSourceAnalysis: () => get('/analytics/source_analysis/'),
+  
+  // Task analytics
   getTaskAnalytics: () => get('/analytics/task_analytics/'),
+  
+  // Revenue & conversion
   getRevenueTrends: () => get('/analytics/revenue_trends/'),
   getConversionMetrics: () => get('/analytics/conversion_metrics/'),
+  
+  // Executive
   getExecutiveSummary: () => get('/analytics/executive_summary/'),
+  getKPI: () => get('/analytics/kpi/'),
 }
 
 // ==============================
-// 📅 CALENDAR API (New addition)
+// 📅 CALENDAR API
 // ==============================
 
+export const calendarAPI = {
+  getEvents: (params = {}) => get('/calendar/events/', params),
+  createEvent: (data) => post('/calendar/events/', data),
+  updateEvent: (id, data) => put(`/calendar/events/${id}/`, data),
+  deleteEvent: (id) => del(`/calendar/events/${id}/`),
+  getUpcomingEvents: () => get('/calendar/events/upcoming/'),
+}
 
 // ==============================
-// 🧭 EXPORT DEFAULT
+// 🏢 COMPANY API
 // ==============================
+
+export const companyAPI = {
+  getProfile: () => get('/company/profile/'),
+  updateProfile: (data) => put('/company/profile/', data),
+  getTeam: () => get('/company/team/'),
+  inviteMember: (data) => post('/company/team/invite/', data),
+}
+
+// ==============================
+// 🔧 SYSTEM API
+// ==============================
+
+export const systemAPI = {
+  // Health check
+  health: () => get('/system/health/'),
+  
+  // Settings
+  getSettings: () => get('/system/settings/'),
+  updateSettings: (data) => put('/system/settings/', data),
+  
+  // Backup
+  createBackup: () => post('/system/backup/'),
+  getBackups: () => get('/system/backups/'),
+}
+
+// ==============================
+// 📦 EXPORT ALL APIs
+// ==============================
+
+export {
+  get,
+  post,
+  put,
+  patch,
+  del,
+}
 
 export default api

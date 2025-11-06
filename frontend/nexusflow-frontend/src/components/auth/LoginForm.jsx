@@ -5,12 +5,12 @@ import { useNavigate } from 'react-router-dom'
 import Input from '../ui/Input'
 import Button from '../ui/Button'
 
-const LoginForm = ({ onToggleMode }) => {
+const LoginForm = () => {
   const { login, isLoading, error } = useAuth()
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = React.useState(false)
   const [formData, setFormData] = React.useState({
-    username: '', // CHANGED from 'email' to 'username'
+    email: '', // CHANGED BACK to 'email' to match your backend
     password: ''
   })
 
@@ -60,7 +60,8 @@ const LoginForm = ({ onToggleMode }) => {
         return
       }
       
-      const response = await fetch('http://localhost:8000/api/tasks/tasks/', {
+      // Updated to match your actual backend endpoints
+      const response = await fetch('http://localhost:8000/api/me/', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -70,7 +71,7 @@ const LoginForm = ({ onToggleMode }) => {
       
       if (response.ok) {
         const data = await response.json()
-        console.log('✅ API test successful!', data.length, 'tasks found')
+        console.log('✅ API test successful! User data:', data)
       } else {
         const errorText = await response.text()
         console.error('❌ API test failed:', errorText)
@@ -111,14 +112,14 @@ const LoginForm = ({ onToggleMode }) => {
             )}
 
             <Input
-              label="Username" // CHANGED from "Email" to "Username"
-              type="text" // CHANGED from "email" to "text"
-              name="username" // CHANGED from "email" to "username"
-              value={formData.username}
+              label="Email" // CHANGED BACK to "Email"
+              type="email" // CHANGED BACK to "email"
+              name="email" // CHANGED BACK to "email"
+              value={formData.email}
               onChange={handleChange}
               required
-              placeholder="Enter your username"
-              leftIcon={<User className="h-4 w-4 text-gray-400" />} // CHANGED icon
+              placeholder="Enter your email"
+              leftIcon={<Mail className="h-4 w-4 text-gray-400" />} // CHANGED BACK to Mail icon
             />
 
             <div className="relative">
