@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'notifications',
     'opportunities',
     'tasks',
+    'calendar_app',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

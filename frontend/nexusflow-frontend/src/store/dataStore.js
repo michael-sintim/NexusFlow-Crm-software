@@ -19,20 +19,7 @@ export const useDataStore = create((set, get) => ({
     set({ contactsLoading: true, contactsError: null });
     try {
       const response = await contactsAPI.getAll(params);
-      
-      // Handle paginated response format
       const contactsData = response.data.results || response.data;
-      console.log('DataStore: Fetched contacts:', contactsData.length);
-      
-      // Debug: Check if contacted field exists
-      if (contactsData.length > 0) {
-        console.log('DataStore: Sample contact with contacted field:', {
-          id: contactsData[0].id,
-          name: `${contactsData[0].first_name} ${contactsData[0].last_name}`,
-          last_contacted: contactsData[0].last_contacted,
-          contacted: contactsData[0].contacted
-        });
-      }
       
       set({ contacts: contactsData, contactsLoading: false });
       return contactsData;
@@ -45,7 +32,6 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  // GET single contact
   fetchContact: async (id) => {
     set({ contactsLoading: true, contactsError: null });
     try {
@@ -61,7 +47,6 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  // CREATE contact
   createContact: async (data) => {
     set({ contactsLoading: true, contactsError: null });
     try {
@@ -80,7 +65,6 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  // UPDATE contact
   updateContact: async (id, data) => {
     set({ contactsLoading: true, contactsError: null });
     try {
@@ -102,7 +86,6 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  // DELETE contact
   deleteContact: async (id) => {
     set({ contactsLoading: true, contactsError: null });
     try {
@@ -121,17 +104,13 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  // GET single contact (alias for fetchContact)
   getContact: async (id) => {
     return get().fetchContact(id);
   },
 
   updateLastContacted: async (contactId) => {
     try {
-      console.log('DataStore: Updating last contacted for:', contactId);
       await contactsAPI.updateLastContacted(contactId);
-      
-      // Update local state immediately for better UX
       set(state => ({
         contacts: state.contacts.map(contact => 
           contact.id === contactId 
@@ -143,22 +122,18 @@ export const useDataStore = create((set, get) => ({
             : contact
         )
       }));
-      
       return contactId;
     } catch (error) {
-      console.error('DataStore: Failed to update last contacted:', error);
+      console.error('Failed to update last contacted:', error);
       throw error;
     }
   },
 
-  // Clear current contact
   clearCurrentContact: () => set({ currentContact: null }),
-
-  // Clear contacts error
   clearContactsError: () => set({ contactsError: null }),
 
   /* =====================
-   * OPPORTUNITIES
+   * OPPORTUNITIES - FIXED
    * ===================== */
   opportunities: [],
   opportunitiesLoading: false,
@@ -168,10 +143,12 @@ export const useDataStore = create((set, get) => ({
     set({ opportunitiesLoading: true, opportunitiesError: null });
     try {
       const response = await opportunitiesAPI.getAll(params);
-      
-      // Handle paginated response format
       const opportunitiesData = response.data.results || response.data;
-      set({ opportunities: opportunitiesData, opportunitiesLoading: false });
+      
+      set({ 
+        opportunities: opportunitiesData, 
+        opportunitiesLoading: false 
+      });
       return opportunitiesData;
     } catch (error) {
       set({
@@ -183,17 +160,79 @@ export const useDataStore = create((set, get) => ({
   },
 
   createOpportunity: async (data) => {
+    set({ opportunitiesLoading: true, opportunitiesError: null });
     try {
-      await opportunitiesAPI.create(data);
-      await get().fetchOpportunities();
+      const response = await opportunitiesAPI.create(data);
+      set(state => ({ 
+        opportunities: [response.data, ...state.opportunities],
+        opportunitiesLoading: false 
+      }));
+      return response.data;
     } catch (error) {
-      console.error('Failed to create opportunity:', error);
+      set({
+        opportunitiesError: error.response?.data || 'Failed to create opportunity',
+        opportunitiesLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  updateOpportunity: async (id, data) => {
+    set({ opportunitiesLoading: true, opportunitiesError: null });
+    try {
+      const response = await opportunitiesAPI.update(id, data);
+      set(state => ({
+        opportunities: state.opportunities.map(opp => 
+          opp.id === id ? response.data : opp
+        ),
+        opportunitiesLoading: false
+      }));
+      return response.data;
+    } catch (error) {
+      set({
+        opportunitiesError: error.response?.data || 'Failed to update opportunity',
+        opportunitiesLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  deleteOpportunity: async (id) => {
+    set({ opportunitiesLoading: true, opportunitiesError: null });
+    try {
+      await opportunitiesAPI.delete(id);
+      set(state => ({
+        opportunities: state.opportunities.filter(opp => opp.id !== id),
+        opportunitiesLoading: false
+      }));
+    } catch (error) {
+      set({
+        opportunitiesError: error.response?.data || 'Failed to delete opportunity',
+        opportunitiesLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  updateOpportunityStage: async (id, stage) => {
+    set({ opportunitiesLoading: true });
+    try {
+      await opportunitiesAPI.updateStage(id, stage);
+      set(state => ({
+        opportunities: state.opportunities.map(opp => 
+          opp.id === id ? { ...opp, stage } : opp
+        ),
+        opportunitiesLoading: false
+      }));
+    } catch (error) {
+      set({ opportunitiesLoading: false });
+      console.error('Failed to update opportunity stage:', error);
       throw error;
     }
   },
 
   /* =====================
-   * TASKS - UPDATED WITH COMPLETE CRUD
+   * TASKS
    * ===================== */
   tasks: [],
   currentTask: null,
@@ -204,8 +243,6 @@ export const useDataStore = create((set, get) => ({
     set({ tasksLoading: true, tasksError: null });
     try {
       const response = await tasksAPI.getAll(params);
-      
-      // Handle paginated response format
       const tasksData = response.data.results || response.data;
       set({ tasks: tasksData, tasksLoading: false });
       return tasksData;
@@ -218,7 +255,6 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  // GET single task
   fetchTask: async (id) => {
     set({ tasksLoading: true, tasksError: null });
     try {
@@ -234,7 +270,6 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  // CREATE task
   createTask: async (data) => {
     set({ tasksLoading: true, tasksError: null });
     try {
@@ -253,7 +288,6 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  // UPDATE task
   updateTask: async (id, data) => {
     set({ tasksLoading: true, tasksError: null });
     try {
@@ -275,7 +309,6 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  // DELETE task
   deleteTask: async (id) => {
     set({ tasksLoading: true, tasksError: null });
     try {
@@ -294,60 +327,58 @@ export const useDataStore = create((set, get) => ({
     }
   },
 
-  // COMPLETE task
-  complete: async (taskId) => {
+  completeTask: async (taskId) => {
+    set({ tasksLoading: true });
     try {
       await tasksAPI.complete(taskId);
-      // Update local state
       set(state => ({
         tasks: state.tasks.map(task => 
           task.id === taskId ? { ...task, status: 'completed' } : task
         ),
         currentTask: state.currentTask?.id === taskId 
           ? { ...state.currentTask, status: 'completed' }
-          : state.currentTask
+          : state.currentTask,
+        tasksLoading: false
       }));
     } catch (error) {
+      set({ tasksLoading: false });
       console.error('Failed to complete task:', error);
       throw error;
     }
   },
 
-  // START task
-  start: async (taskId) => {
+  startTask: async (taskId) => {
+    set({ tasksLoading: true });
     try {
       await tasksAPI.start(taskId);
-      // Update local state
       set(state => ({
         tasks: state.tasks.map(task => 
           task.id === taskId ? { ...task, status: 'in_progress' } : task
         ),
         currentTask: state.currentTask?.id === taskId 
           ? { ...state.currentTask, status: 'in_progress' }
-          : state.currentTask
+          : state.currentTask,
+        tasksLoading: false
       }));
     } catch (error) {
+      set({ tasksLoading: false });
       console.error('Failed to start task:', error);
       throw error;
     }
   },
 
-  // GET single task (alias for fetchTask)
   getTask: async (id) => {
     return get().fetchTask(id);
   },
 
-  // Clear current task
   clearCurrentTask: () => set({ currentTask: null }),
-
-  // Clear tasks error
   clearTasksError: () => set({ tasksError: null }),
 
   /* =====================
-   * ANALYTICS
+   * ANALYTICS - FIXED
    * ===================== */
   dashboardData: null,
-  pipelineData: null,
+  pipelineData: [], // ✅ FIXED: Changed from null to []
   analyticsLoading: false,
   analyticsError: null,
 
@@ -370,14 +401,37 @@ export const useDataStore = create((set, get) => ({
     set({ analyticsLoading: true, analyticsError: null });
     try {
       const response = await analyticsAPI.getPipeline();
-      set({ pipelineData: response.data, analyticsLoading: false });
-      return response.data;
+      // ✅ FIXED: Ensure we always set an array
+      const pipelineData = Array.isArray(response.data) ? response.data : [];
+      set({ pipelineData, analyticsLoading: false });
+      return pipelineData;
     } catch (error) {
       set({
         analyticsError: error.response?.data || 'Failed to fetch pipeline data',
         analyticsLoading: false,
+        pipelineData: [] // ✅ FIXED: Set empty array on error
       });
       throw error;
     }
   },
+
+  /* =====================
+   * BULK ACTIONS
+   * ===================== */
+  clearAllErrors: () => set({ 
+    contactsError: null, 
+    opportunitiesError: null, 
+    tasksError: null, 
+    analyticsError: null 
+  }),
+
+  resetAllData: () => set({
+    contacts: [],
+    opportunities: [],
+    tasks: [],
+    dashboardData: null,
+    pipelineData: [], // ✅ FIXED: Changed from null to []
+    currentContact: null,
+    currentTask: null
+  })
 }));
