@@ -220,7 +220,7 @@ const PipelinePage = () => {
             </div>
             
             <div className="p-6">
-              <div className="h-[600px]">
+              <div className="h-[150px]">
                 <KanbanBoard opportunities={filteredOpportunities} />
               </div>
             </div>

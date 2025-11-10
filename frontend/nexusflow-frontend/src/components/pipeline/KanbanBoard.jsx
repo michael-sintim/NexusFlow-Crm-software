@@ -16,8 +16,15 @@ const DEAL_STAGES = [
 const OpportunityCard = ({ opportunity, onContactClick }) => {
   const stage = DEAL_STAGES.find(s => s.id === opportunity.stage)
   
+  const handleDragStart = (e) => {
+    e.dataTransfer.setData('opportunityId', opportunity.id.toString())
+    e.dataTransfer.setData('currentStage', opportunity.stage)
+  }
+
   return (
     <div
+      draggable
+      onDragStart={handleDragStart}
       onClick={() => onContactClick(opportunity)}
       className="bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-md transition-all cursor-pointer group mb-3"
     >
@@ -61,10 +68,34 @@ const OpportunityCard = ({ opportunity, onContactClick }) => {
 
 // Stage Column Component
 const StageColumn = ({ stage, opportunities, onContactClick }) => {
+  const { updateOpportunityStage } = useDataStore()
   const stageOpportunities = opportunities.filter(opp => opp.stage === stage.id)
 
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDrop = async (e) => {
+    e.preventDefault()
+    const opportunityId = e.dataTransfer.getData('opportunityId')
+    const currentStage = e.dataTransfer.getData('currentStage')
+    
+    if (currentStage !== stage.id) {
+      try {
+        await updateOpportunityStage(parseInt(opportunityId), stage.id)
+      } catch (error) {
+        console.error('Failed to update opportunity stage:', error)
+      }
+    }
+  }
+
   return (
-    <div className="flex flex-col h-full">
+    <div 
+      className="flex flex-col h-full"
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
       {/* Column Header */}
       <div className={`p-3 rounded-lg ${stage.color} text-white mb-3 flex-shrink-0`}>
         <div className="flex items-center justify-between">
@@ -76,7 +107,7 @@ const StageColumn = ({ stage, opportunities, onContactClick }) => {
       </div>
       
       {/* Opportunities List */}
-      <div className="flex-1 overflow-y-auto space-y-2 min-h-[200px]">
+      <div className="flex-1 overflow-y-auto space-y-2 min-h-[80px]">
         {stageOpportunities.length === 0 ? (
           <div className="text-center py-6 text-gray-400 dark:text-gray-500 text-xs border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg h-full flex items-center justify-center">
             No opportunities
@@ -98,7 +129,7 @@ const StageColumn = ({ stage, opportunities, onContactClick }) => {
 // Main Kanban Board Component
 const KanbanBoard = ({ opportunities, onContactClick }) => {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 h-full">
+    <div className="grid grid-cols-2 lg:grid-cols-6 l:grid-cols-6 gap-4 h-m">
       {DEAL_STAGES.map(stage => (
         <StageColumn
           key={stage.id}
