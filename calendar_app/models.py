@@ -82,3 +82,4 @@ class EventReminder(models.Model):
     
     class Meta:
         ordering = ['reminder_time']
+

@@ -6,7 +6,7 @@ from accounts.models import User
 from contacts.models import Contact
 from opportunities.models import Opportunity
 from tasks.models import Task
-from analytics.models import CalendarEvent
+
 
 class DashboardStatsSerializer(serializers.Serializer):
     # Current period (last 30 days)
@@ -57,27 +57,27 @@ class TeamPerformanceSerializer(serializers.Serializer):
     avg_deal_size = serializers.FloatField()
     pipeline_value = serializers.FloatField()
 
-class CalendarEventSerializer(serializers.ModelSerializer):
-    customer_name = serializers.CharField(source='customer.company_name', read_only=True)
-    opportunity_name = serializers.CharField(source='opportunity.name', read_only=True)
-    assigned_to_name = serializers.CharField(source='assigned_to.get_full_name', read_only=True)
-    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+# class CalendarEventSerializer(serializers.ModelSerializer):
+#     customer_name = serializers.CharField(source='customer.company_name', read_only=True)
+#     opportunity_name = serializers.CharField(source='opportunity.name', read_only=True)
+#     assigned_to_name = serializers.CharField(source='assigned_to.get_full_name', read_only=True)
+#     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     
-    class Meta:
-        model = CalendarEvent
-        fields = [
-            'id', 'title', 'description', 'event_type', 'start_time', 'end_time',
-            'all_day', 'customer', 'opportunity', 'assigned_to', 'created_by',
-            'status', 'reminder_minutes', 'customer_name', 'opportunity_name',
-            'assigned_to_name', 'created_by_name', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['created_by', 'created_at', 'updated_at']
+#     class Meta:
+#         model = CalendarEvent
+#         fields = [
+#             'id', 'title', 'description', 'event_type', 'start_time', 'end_time',
+#             'all_day', 'customer', 'opportunity', 'assigned_to', 'created_by',
+#             'status', 'reminder_minutes', 'customer_name', 'opportunity_name',
+#             'assigned_to_name', 'created_by_name', 'created_at', 'updated_at'
+#         ]
+#         read_only_fields = ['created_by', 'created_at', 'updated_at']
     
-    def validate(self, data):
-        """Validate that end_time is after start_time"""
-        if data['end_time'] <= data['start_time']:
-            raise serializers.ValidationError("End time must be after start time")
-        return data
+#     def validate(self, data):
+#         """Validate that end_time is after start_time"""
+#         if data['end_time'] <= data['start_time']:
+#             raise serializers.ValidationError("End time must be after start time")
+#         return data
 
 class ActivityTrendsSerializer(serializers.Serializer):
     period = serializers.CharField()

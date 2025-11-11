@@ -1,5 +1,5 @@
 // pages/PipelinePage.jsx
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { Plus, TrendingUp, Users, Target, DollarSign, Trophy, Search } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
 import Button from '../components/ui/Button'
@@ -9,85 +9,145 @@ import KanbanBoard from '../components/pipeline/KanbanBoard'
 const PipelinePage = () => {
   const navigate = useNavigate()
   
-  // Get data from store with safe defaults
+  // Get data from store with safe defaults and validation
   const { 
-    opportunities = [], 
-    opportunitiesLoading,
+    opportunities: rawOpportunities = [], 
+    opportunitiesLoading = false,
     fetchOpportunities,
     fetchPipelineData
   } = useDataStore()
 
+  // Ensure opportunities is always an array
+  const opportunities = Array.isArray(rawOpportunities) ? rawOpportunities : []
+
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStage, setSelectedStage] = useState('')
+  const [fetchError, setFetchError] = useState(null)
 
-  // Safe data fetch with error handling
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true)
-        await Promise.all([
-          fetchOpportunities(),
-          fetchPipelineData()
-        ])
-      } catch (error) {
-        console.error('Failed to load pipeline data:', error)
-      } finally {
-        setLoading(false)
+  // Safe data fetch with comprehensive error handling
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true)
+      setFetchError(null)
+      
+      // Validate that functions exist before calling
+      if (typeof fetchOpportunities !== 'function') {
+        throw new Error('fetchOpportunities is not available')
       }
-    }
+      
+      if (typeof fetchPipelineData !== 'function') {
+        throw new Error('fetchPipelineData is not available')
+      }
 
-    loadData()
+      await Promise.all([
+        fetchOpportunities(),
+        fetchPipelineData()
+      ])
+    } catch (error) {
+      console.error('Failed to load pipeline data:', error)
+      setFetchError(error.message || 'Failed to load data')
+    } finally {
+      setLoading(false)
+    }
   }, [fetchOpportunities, fetchPipelineData])
 
-  // Safe metric calculations
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  // Safe metric calculations with comprehensive validation
   const metrics = React.useMemo(() => {
+    const defaultMetrics = {
+      totalValue: 0,
+      activeOpportunities: 0,
+      wonValue: 0,
+      winRate: 0,
+      avgDealSize: 0
+    }
+
+    // Early return if no valid opportunities
+    if (!opportunities.length) {
+      return defaultMetrics
+    }
+
     try {
-      const totalValue = opportunities.reduce((sum, opp) => sum + (parseFloat(opp?.value) || 0), 0)
-      const activeOpportunities = opportunities.filter(opp => 
-        opp?.stage && !['won', 'lost', 'closed_won', 'closed_lost'].includes(opp.stage)
-      ).length
-      const wonOpportunities = opportunities.filter(opp => 
-        opp?.stage && ['won', 'closed_won'].includes(opp.stage)
-      )
-      const wonValue = wonOpportunities.reduce((sum, opp) => sum + (parseFloat(opp?.value) || 0), 0)
+      let totalValue = 0
+      let activeOpportunities = 0
+      let wonOpportunities = 0
+      let wonValue = 0
+
+      // Safe iteration with validation
+      opportunities.forEach(opp => {
+        if (opp && typeof opp === 'object') {
+          const value = parseFloat(opp.value) || 0
+          totalValue += value
+
+          const stage = opp.stage
+          if (stage && typeof stage === 'string') {
+            if (!['won', 'lost', 'closed_won', 'closed_lost'].includes(stage)) {
+              activeOpportunities++
+            }
+            
+            if (['won', 'closed_won'].includes(stage)) {
+              wonOpportunities++
+              wonValue += value
+            }
+          }
+        }
+      })
+
       const totalOpportunities = opportunities.length
+      const winRate = totalOpportunities > 0 ? Math.round((wonOpportunities / totalOpportunities) * 100) : 0
+      const avgDealSize = totalOpportunities > 0 ? totalValue / totalOpportunities : 0
 
       return {
         totalValue,
         activeOpportunities,
         wonValue,
-        winRate: totalOpportunities > 0 ? Math.round((wonOpportunities.length / totalOpportunities) * 100) : 0,
-        avgDealSize: totalOpportunities > 0 ? totalValue / totalOpportunities : 0
+        winRate,
+        avgDealSize
       }
     } catch (error) {
       console.error('Error calculating metrics:', error)
-      return {
-        totalValue: 0,
-        activeOpportunities: 0,
-        wonValue: 0,
-        winRate: 0,
-        avgDealSize: 0
-      }
+      return defaultMetrics
     }
   }, [opportunities])
 
-  // Safe filtered opportunities
+  // Safe filtered opportunities with validation
   const filteredOpportunities = React.useMemo(() => {
+    if (!opportunities.length) {
+      return []
+    }
+
     try {
       return opportunities.filter(opp => {
-        // Search filter
-        if (searchTerm) {
+        // Validate opportunity object
+        if (!opp || typeof opp !== 'object') {
+          return false
+        }
+
+        // Safe search filter
+        if (searchTerm && searchTerm.trim()) {
+          const searchLower = searchTerm.toLowerCase().trim()
+          const name = String(opp.name || '').toLowerCase()
+          const company = String(opp.company || '').toLowerCase()
+          const contactName = String(opp.contact_name || '').toLowerCase()
+
           const matchesSearch = 
-            opp?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            opp?.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            opp?.contact_name?.toLowerCase().includes(searchTerm.toLowerCase())
+            name.includes(searchLower) ||
+            company.includes(searchLower) ||
+            contactName.includes(searchLower)
+          
           if (!matchesSearch) return false
         }
 
-        // Stage filter
-        if (selectedStage && opp?.stage !== selectedStage) {
-          return false
+        // Safe stage filter
+        if (selectedStage && selectedStage.trim()) {
+          const oppStage = String(opp.stage || '')
+          if (oppStage !== selectedStage) {
+            return false
+          }
         }
 
         return true
@@ -105,6 +165,33 @@ const PipelinePage = () => {
   const handleClearFilters = () => {
     setSearchTerm('')
     setSelectedStage('')
+  }
+
+  const handleRetry = () => {
+    loadData()
+  }
+
+  // Show error state if fetch failed
+  if (fetchError) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <TrendingUp className="h-8 w-8 text-red-600 dark:text-red-400" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Failed to Load Pipeline
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            {fetchError}
+          </p>
+          <Button onClick={handleRetry}>
+            <Plus className="h-4 w-4 mr-2" />
+            Try Again
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   if (loading || opportunitiesLoading) {
@@ -185,14 +272,16 @@ const PipelinePage = () => {
         </div>
 
         {/* Filter Bar */}
-        <FilterBar
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          selectedStage={selectedStage}
-          onStageChange={setSelectedStage}
-          onClearFilters={handleClearFilters}
-          hasFilters={hasFilters}
-        />
+        <div className="mb-6">
+          <FilterBar
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            selectedStage={selectedStage}
+            onStageChange={setSelectedStage}
+            onClearFilters={handleClearFilters}
+            hasFilters={hasFilters}
+          />
+        </div>
 
         {/* Kanban Board or Empty State */}
         {!hasOpportunities ? (
@@ -221,9 +310,7 @@ const PipelinePage = () => {
             </div>
             
             <div className="p-6">
-              <div className="h-[150px]">
-                <KanbanBoard opportunities={filteredOpportunities} />
-              </div>
+              <KanbanBoard opportunities={filteredOpportunities} />
             </div>
           </div>
         )}
@@ -241,6 +328,8 @@ const MetricCard = ({ title, value, subtitle, icon, color }) => {
     orange: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
   }
 
+  const colorClass = colorClasses[color] || colorClasses.blue
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200">
       <div className="flex items-center justify-between">
@@ -252,7 +341,7 @@ const MetricCard = ({ title, value, subtitle, icon, color }) => {
             {value}
           </p>
         </div>
-        <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
+        <div className={`p-3 rounded-lg ${colorClass}`}>
           {icon}
         </div>
       </div>
@@ -270,10 +359,23 @@ const FilterBar = ({ searchTerm, onSearchChange, selectedStage, onStageChange, o
   const handleSearchChange = (e) => {
     const value = e.target.value
     setLocalSearch(value)
-    // Simple debounce
-    setTimeout(() => onSearchChange(value), 300)
+    if (typeof onSearchChange === 'function') {
+      setTimeout(() => onSearchChange(value), 300)
+    }
   }
 
+  const handleStageChange = (e) => {
+    const value = e.target.value
+    if (typeof onStageChange === 'function') {
+      onStageChange(value)
+    }
+  }
+
+  const handleClear = () => {
+    if (typeof onClearFilters === 'function') {
+      onClearFilters()
+    }
+  }
 }
 
 // Empty State Components

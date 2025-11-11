@@ -1,8 +1,8 @@
 # calendar/serializers.py
 from rest_framework import serializers
 from .models import CalendarEvent, EventReminder
-from contacts.serializers import ContactSerializer
-from opportunities.serializers import OpportunitySerializer
+from contacts.serializers import ContactListSerializer
+from opportunities.serializers import OpportunityListSerializer
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -15,8 +15,8 @@ class UserSerializer(serializers.ModelSerializer):
 class CalendarEventSerializer(serializers.ModelSerializer):
     assigned_to_details = UserSerializer(source='assigned_to', read_only=True)
     created_by_details = UserSerializer(source='created_by', read_only=True)
-    customer_details = ContactSerializer(source='customer', read_only=True)
-    opportunity_details = OpportunitySerializer(source='opportunity', read_only=True)
+    customer_details = ContactListSerializer(source='customer', read_only=True)
+    opportunity_details = OpportunityListSerializer(source='opportunity', read_only=True)
     duration = serializers.ReadOnlyField()
     
     class Meta:

@@ -3,24 +3,51 @@ import React from 'react'
 import { useDataStore } from '../../store/dataStore'
 import { MoreHorizontal, User, Building, DollarSign } from 'lucide-react'
 
+// Match these with your Django backend STAGE_CHOICES
 const DEAL_STAGES = [
-  { id: 'new_lead', name: 'New Lead', color: 'bg-blue-500', textColor: 'text-blue-700' },
-  { id: 'needs', name: 'Needs Analysis', color: 'bg-purple-500', textColor: 'text-purple-700' },
-  { id: 'price_discussion', name: 'Price Discussion', color: 'bg-yellow-500', textColor: 'text-yellow-700' },
-  { id: 'final_review', name: 'Final Review', color: 'bg-orange-500', textColor: 'text-orange-700' },
-  { id: 'won', name: 'Won', color: 'bg-green-500', textColor: 'text-green-700' },
-  { id: 'lost', name: 'Lost', color: 'bg-red-500', textColor: 'text-red-700' }
+  { id: 'prospect', name: 'Prospect', color: 'bg-blue-500', textColor: 'text-blue-700' },
+  { id: 'qualified', name: 'Qualified', color: 'bg-purple-500', textColor: 'text-purple-700' },
+  { id: 'proposal', name: 'Proposal', color: 'bg-yellow-500', textColor: 'text-yellow-700' },
+  { id: 'negotiation', name: 'Negotiation', color: 'bg-orange-500', textColor: 'text-orange-700' },
+  { id: 'closed_won', name: 'Closed Won', color: 'bg-green-500', textColor: 'text-green-700' },
+  { id: 'closed_lost', name: 'Closed Lost', color: 'bg-red-500', textColor: 'text-red-700' }
 ]
+
+// Format numbers in hundreds (K) format
+const formatNumber = (value) => {
+  if (!value && value !== 0) return '$0'
+  
+  const numValue = parseFloat(value)
+  if (isNaN(numValue)) return '$0'
+  
+  if (numValue >= 1000000) {
+    return `$${(numValue / 1000000).toFixed(1)}M`
+  } else if (numValue >= 1000) {
+    return `$${(numValue / 1000).toFixed(0)}K`
+  } else {
+    return `$${numValue.toFixed(0)}`
+  }
+}
+
+// Format numbers with commas for thousands
+const formatNumberWithCommas = (value) => {
+  if (!value && value !== 0) return '0'
+  
+  const numValue = parseFloat(value)
+  if (isNaN(numValue)) return '0'
+  
+  return numValue.toLocaleString('en-US')
+}
 
 // Opportunity Card Component
 const OpportunityCard = ({ opportunity, onContactClick }) => {
   const stage = DEAL_STAGES.find(s => s.id === opportunity.stage)
   
-  // Fix data structure mismatch
-  const opportunityName = opportunity.name || opportunity.title || 'Unnamed Opportunity'
-  const companyName = opportunity.company || opportunity.contact_details?.company || 'No company'
-  const contactName = opportunity.contact_name || 
-    `${opportunity.contact_details?.first_name || ''} ${opportunity.contact_details?.last_name || ''}`.trim() || 
+  // Use the exact field names from your Django API response
+  const opportunityName = opportunity.title || 'Unnamed Opportunity'
+  const companyName = opportunity.contact?.company_name || 'No company'
+  const contactName = opportunity.contact ? 
+    `${opportunity.contact.first_name || ''} ${opportunity.contact.last_name || ''}`.trim() : 
     'No contact'
   
   const handleDragStart = (e) => {
@@ -58,7 +85,12 @@ const OpportunityCard = ({ opportunity, onContactClick }) => {
         {opportunity.value && (
           <div className="flex items-center gap-1.5 text-xs font-semibold text-green-600 dark:text-green-400">
             <DollarSign className="h-3 w-3 flex-shrink-0" />
-            <span>${(opportunity.value / 1000).toFixed(0)}K</span>
+            <span>{formatNumber(opportunity.value)}</span>
+            {opportunity.value >= 1000 && (
+              <span className="text-xs text-gray-400 ml-1">
+                ({formatNumberWithCommas(opportunity.value)})
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -68,6 +100,8 @@ const OpportunityCard = ({ opportunity, onContactClick }) => {
           <div className={`w-2 h-2 rounded-full ${stage?.color}`} />
           <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{stage?.name}</span>
         </div>
+        
+        {/* Removed probability indicator */}
       </div>
     </div>
   )
@@ -77,6 +111,17 @@ const OpportunityCard = ({ opportunity, onContactClick }) => {
 const StageColumn = ({ stage, opportunities, onContactClick }) => {
   const { updateOpportunityStage } = useDataStore()
   const stageOpportunities = opportunities.filter(opp => opp.stage === stage.id)
+
+  // Calculate stage metrics (without probability)
+  const stageMetrics = React.useMemo(() => {
+    const totalValue = stageOpportunities.reduce((sum, opp) => sum + (parseFloat(opp.value) || 0), 0)
+    const avgValue = stageOpportunities.length > 0 ? totalValue / stageOpportunities.length : 0
+
+    return {
+      totalValue,
+      avgValue
+    }
+  }, [stageOpportunities])
 
   const handleDragOver = (e) => {
     e.preventDefault()
@@ -90,7 +135,7 @@ const StageColumn = ({ stage, opportunities, onContactClick }) => {
     
     if (currentStage !== stage.id) {
       try {
-        await updateOpportunityStage(parseInt(opportunityId), stage.id)
+        await updateOpportunityStage(opportunityId, stage.id)
       } catch (error) {
         console.error('Failed to update opportunity stage:', error)
       }
@@ -99,25 +144,38 @@ const StageColumn = ({ stage, opportunities, onContactClick }) => {
 
   return (
     <div 
-      className="flex flex-col h-full"
+      className="flex flex-col h-full min-h-[500px]"
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* Column Header */}
+      {/* Column Header with Metrics */}
       <div className={`p-3 rounded-lg ${stage.color} text-white mb-3 flex-shrink-0`}>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-sm truncate">{stage.name}</h3>
           <span className="text-xs bg-white/20 px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
             {stageOpportunities.length}
           </span>
         </div>
+        
+        {/* Stage Metrics (without probability) */}
+        <div className="space-y-1 text-xs opacity-90">
+          <div className="flex justify-between">
+            <span>Total:</span>
+            <span className="font-semibold">{formatNumber(stageMetrics.totalValue)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Avg Deal:</span>
+            <span className="font-semibold">{formatNumber(stageMetrics.avgValue)}</span>
+          </div>
+          {/* Removed win chance metric */}
+        </div>
       </div>
       
       {/* Opportunities List */}
-      <div className="flex-1 overflow-y-auto space-y-2 min-h-[80px]">
+      <div className="flex-1 overflow-y-auto space-y-2">
         {stageOpportunities.length === 0 ? (
-          <div className="text-center py-6 text-gray-400 dark:text-gray-500 text-xs border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg h-full flex items-center justify-center">
-            No opportunities
+          <div className="text-center py-6 text-gray-400 dark:text-gray-500 text-xs border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg h-24 flex items-center justify-center">
+            Drop opportunities here
           </div>
         ) : (
           stageOpportunities.map(opportunity => (
@@ -135,16 +193,57 @@ const StageColumn = ({ stage, opportunities, onContactClick }) => {
 
 // Main Kanban Board Component
 const KanbanBoard = ({ opportunities, onContactClick }) => {
+  // Calculate overall pipeline metrics (without weighted value)
+  const pipelineMetrics = React.useMemo(() => {
+    const totalValue = opportunities.reduce((sum, opp) => sum + (parseFloat(opp.value) || 0), 0)
+    const activeOpportunities = opportunities.filter(opp => 
+      opp.stage && !['closed_won', 'closed_lost'].includes(opp.stage)
+    ).length
+
+    return {
+      totalValue,
+      activeOpportunities,
+      totalOpportunities: opportunities.length
+    }
+  }, [opportunities])
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-6 l:grid-cols-6 gap-4 h-m">
-      {DEAL_STAGES.map(stage => (
-        <StageColumn
-          key={stage.id}
-          stage={stage}
-          opportunities={opportunities}
-          onContactClick={onContactClick}
-        />
-      ))}
+    <div className="space-y-4">
+      {/* Pipeline Summary (without weighted value) */}
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-800 rounded-lg p-4 border border-blue-200 dark:border-gray-700">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
+          <div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {formatNumber(pipelineMetrics.totalValue)}
+            </div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">Total Pipeline</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {pipelineMetrics.activeOpportunities}
+            </div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">Active Deals</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {pipelineMetrics.totalOpportunities}
+            </div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">Total Opportunities</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Kanban Board */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 min-h-[600px]">
+        {DEAL_STAGES.map(stage => (
+          <StageColumn
+            key={stage.id}
+            stage={stage}
+            opportunities={opportunities}
+            onContactClick={onContactClick}
+          />
+        ))}
+      </div>
     </div>
   )
 }

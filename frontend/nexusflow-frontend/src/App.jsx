@@ -12,12 +12,14 @@ import EditContactPage from './pages/EditContactPage'
 import PipelinePage from './pages/PipelinePage'
 import TasksPage from './pages/TasksPage'
 import TaskForm from './components/tasks/TaskForm'
-import TaskDetail from './components/tasks/TaskDetail' // ADD THIS IMPORT
+import TaskDetail from './components/tasks/TaskDetail'
 import OpportunityForm from './components/pipeline/OpportunityForm'
 import ContactForm from './components/contacts/ContactForm'
 import AnalyticsPage from './pages/AnalyticsPage'
 import SettingsPage from './pages/SettingsPage'
 import NotFoundPage from './pages/404Page'
+import CalendarPage from './pages/CalendarPage'
+import EventDetailsPage from './pages/EventDetailsPage'
 import './index.css'
 
 function App() {
@@ -52,6 +54,8 @@ function App() {
             <Route path="tasks" element={<TasksPage />} />
             {/* ADD TASK DETAIL ROUTE INSIDE LAYOUT */}
             <Route path="tasks/:id" element={<TaskDetail />} />
+            {/* ADD CALENDAR ROUTES */}
+            <Route path="calendar" element={<CalendarPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
@@ -76,6 +80,12 @@ function App() {
           <Route path="/contacts/new" element={
             <ProtectedRoute>
               <ContactForm />
+            </ProtectedRoute>
+          } />
+          {/* ADD CALENDAR EVENT DETAIL ROUTE */}
+          <Route path="/calendar/event/:id" element={
+            <ProtectedRoute>
+              <EventDetailsPage />
             </ProtectedRoute>
           } />
 

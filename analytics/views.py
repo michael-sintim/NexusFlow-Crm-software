@@ -581,8 +581,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import CalendarEvent
-from .serializers import CalendarEventSerializer
+from calendar_app.models import CalendarEvent
+from calendar_app.serializers import CalendarEventSerializer
 
 class CalendarEventViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

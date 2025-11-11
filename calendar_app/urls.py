@@ -8,5 +8,5 @@ router.register(r'events', CalendarEventViewSet, basename='events')
 router.register(r'reminders', EventReminderViewSet, basename='reminders')
 
 urlpatterns = [
-    path('api/calendar/', include(router.urls)),
+    path('calendar/', include(router.urls)),
 ]
