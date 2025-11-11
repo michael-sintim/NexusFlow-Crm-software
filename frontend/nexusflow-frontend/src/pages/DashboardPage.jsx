@@ -6,12 +6,28 @@ import RevenueChart from '../components/dashboard/RevenueChart'
 import { useNavigate } from 'react-router-dom'
 
 const DashboardPage = () => {
-  const { dashboardData, fetchDashboardData } = useDataStore()
+  const { dashboardData, fetchDashboardData, tasks } = useDataStore()
   const navigate = useNavigate()
 
   React.useEffect(() => {
     fetchDashboardData()
   }, [fetchDashboardData])
+
+  // Safely handle tasks data - same logic as TasksPage
+  const tasksArray = React.useMemo(() => {
+    if (!tasks) return []
+    if (Array.isArray(tasks)) return tasks
+    if (tasks.results && Array.isArray(tasks.results)) return tasks.results
+    if (tasks.data && Array.isArray(tasks.data)) return tasks.data
+    return []
+  }, [tasks])
+
+  // Calculate completed tasks count - same logic as TasksPage
+  const completedTasksCount = tasksArray.filter(t => t.status === 'completed').length
+
+  // Calculate previous period completed tasks (you might need to fetch this from your API)
+  // For now, we'll use a placeholder - you should update this based on your actual data
+  const previousCompletedTasksCount = 0 // This should come from your dashboard API
 
   const stats = [
     {
@@ -50,12 +66,9 @@ const DashboardPage = () => {
     },
     {
       title: 'Tasks Completed',
-      value: dashboardData?.closed_won || 0,
-      change: calculatePercentageChange(
-        dashboardData?.closed_won, 
-        dashboardData?.previous_closed_won
-      ),
-      changeType: getChangeType(dashboardData?.closed_won, dashboardData?.previous_closed_won),
+      value: completedTasksCount, // Now using the same logic as TasksPage
+      change: calculatePercentageChange(completedTasksCount, previousCompletedTasksCount),
+      changeType: getChangeType(completedTasksCount, previousCompletedTasksCount),
       icon: CheckCircle,
       color: 'orange'
     },

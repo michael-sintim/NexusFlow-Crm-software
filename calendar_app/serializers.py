@@ -13,7 +13,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'first_name', 'last_name', 'email', 'role']
 
 class CalendarEventSerializer(serializers.ModelSerializer):
-    assigned_to_details = UserSerializer(source='assigned_to', read_only=True)
     created_by_details = UserSerializer(source='created_by', read_only=True)
     customer_details = ContactListSerializer(source='customer', read_only=True)
     opportunity_details = OpportunityListSerializer(source='opportunity', read_only=True)
@@ -24,11 +23,36 @@ class CalendarEventSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'description', 'event_type', 'start_time', 'end_time',
             'all_day', 'customer', 'customer_details', 'opportunity', 'opportunity_details',
-            'assigned_to', 'assigned_to_details', 'created_by', 'created_by_details',
-            'status', 'reminder_minutes', 'is_recurring', 'recurrence_rule',
-            'recurrence_end', 'color', 'duration', 'created_at', 'updated_at'
+            'created_by', 'created_by_details', 'status', 'reminder_minutes', 
+            'is_recurring', 'recurrence_rule', 'recurrence_end', 'color', 
+            'duration', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_by', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        # Get the request user and set both assigned_to and created_by
+        request = self.context.get('request')
+        user = request.user if request and hasattr(request, 'user') else None
+        
+        if user:
+            validated_data['assigned_to'] = user
+            validated_data['created_by'] = user
+        else:
+            # Fallback: get the first active user
+            first_user = User.objects.filter(is_active=True).first()
+            if first_user:
+                validated_data['assigned_to'] = first_user
+                validated_data['created_by'] = first_user
+            else:
+                raise serializers.ValidationError("No user available to assign the event to")
+        
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Prevent assigned_to from being changed via API since it's auto-assigned
+        if 'assigned_to' in validated_data:
+            del validated_data['assigned_to']
+        return super().update(instance, validated_data)
 
 class EventReminderSerializer(serializers.ModelSerializer):
     class Meta:

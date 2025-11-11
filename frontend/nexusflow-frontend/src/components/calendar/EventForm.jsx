@@ -5,14 +5,11 @@ import {
   Clock, 
   Users, 
   Palette,
-  User,
-  Mail,
-  Building,
   Tag,
   MapPin
 } from 'lucide-react'
 
-const EventForm = ({ event, onSave, onCancel, users = [] }) => {
+const EventForm = ({ event, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -20,15 +17,12 @@ const EventForm = ({ event, onSave, onCancel, users = [] }) => {
     end_time: '',
     all_day: false,
     color: '#3788d8',
-    assigned_to: [],
     location: '',
     event_type: 'meeting',
     reminder: '15'
   })
 
   const [loading, setLoading] = useState(false)
-  const [selectedUsers, setSelectedUsers] = useState([])
-  const [showUserDropdown, setShowUserDropdown] = useState(false)
 
   // Event type options
   const eventTypes = [
@@ -51,7 +45,6 @@ const EventForm = ({ event, onSave, onCancel, users = [] }) => {
 
   useEffect(() => {
     if (event) {
-      const assignedUsers = event.assigned_to || []
       setFormData({
         title: event.title || '',
         description: event.description || '',
@@ -59,12 +52,10 @@ const EventForm = ({ event, onSave, onCancel, users = [] }) => {
         end_time: event.end_time ? formatDateTimeLocal(event.end_time) : '',
         all_day: event.all_day || false,
         color: event.color || '#3788d8',
-        assigned_to: assignedUsers,
         location: event.location || '',
         event_type: event.event_type || 'meeting',
         reminder: event.reminder || '15'
       })
-      setSelectedUsers(assignedUsers)
     } else {
       // Set default times for new event
       const now = new Date()
@@ -91,10 +82,7 @@ const EventForm = ({ event, onSave, onCancel, users = [] }) => {
     setLoading(true)
     
     try {
-      await onSave({
-        ...formData,
-        assigned_to: selectedUsers.map(user => user.id)
-      })
+      await onSave(formData)
     } catch (error) {
       console.error('Error saving event:', error)
     } finally {
@@ -108,21 +96,6 @@ const EventForm = ({ event, onSave, onCancel, users = [] }) => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
-  }
-
-  const toggleUserSelection = (user) => {
-    setSelectedUsers(prev => {
-      const isSelected = prev.find(u => u.id === user.id)
-      if (isSelected) {
-        return prev.filter(u => u.id !== user.id)
-      } else {
-        return [...prev, user]
-      }
-    })
-  }
-
-  const removeUser = (userId) => {
-    setSelectedUsers(prev => prev.filter(user => user.id !== userId))
   }
 
   const colors = [
@@ -293,74 +266,6 @@ const EventForm = ({ event, onSave, onCancel, users = [] }) => {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              {/* Assigned To */}
-              <div className="relative">
-                <label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center">
-                  <Users className="h-4 w-4 mr-2 text-gray-500" />
-                  Assign To
-                </label>
-                
-                {/* Selected Users */}
-                {selectedUsers.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {selectedUsers.map(user => (
-                      <div
-                        key={user.id}
-                        className="flex items-center space-x-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm"
-                      >
-                        <span>{user.first_name} {user.last_name}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeUser(user.id)}
-                          className="hover:text-blue-600"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* User Dropdown */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowUserDropdown(!showUserDropdown)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left flex items-center justify-between bg-white"
-                  >
-                    <span className="text-gray-500">Select team members...</span>
-                    <Users className="h-4 w-4 text-gray-400" />
-                  </button>
-
-                  {showUserDropdown && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {users.map(user => (
-                        <div
-                          key={user.id}
-                          onClick={() => toggleUserSelection(user)}
-                          className={`flex items-center space-x-3 p-3 cursor-pointer hover:bg-gray-50 ${
-                            selectedUsers.find(u => u.id === user.id) ? 'bg-blue-50' : ''
-                          }`}
-                        >
-                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                            <User className="h-4 w-4 text-gray-600" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">
-                              {user.first_name} {user.last_name}
-                            </div>
-                            <div className="text-xs text-gray-500">{user.email}</div>
-                          </div>
-                          {selectedUsers.find(u => u.id === user.id) && (
-                            <div className="w-2 h-2 bg-blue-600 rounded-full" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
 
               {/* Reminder */}

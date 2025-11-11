@@ -14,20 +14,19 @@ const DEAL_STAGES = [
   { id: 'closed_lost', name: 'Closed Lost', color: 'bg-red-500', textColor: 'text-red-700' }
 ]
 
-// Format numbers in hundreds (K) format for cards
+// Format numbers in hundreds (K) format for cards// Format numbers to show exact figures without rounding
 const formatNumber = (value) => {
   if (!value && value !== 0) return '$0'
   
   const numValue = parseFloat(value)
   if (isNaN(numValue)) return '$0'
   
-  if (numValue >= 1000000) {
-    return `$${(numValue / 1000000).toFixed(1)}M`
-  } else if (numValue >= 1000) {
-    return `$${(numValue / 1000).toFixed(0)}K`
-  } else {
-    return `$${numValue.toFixed(0)}`
-  }
+  // Show exact amount with commas for thousands
+  return `$${numValue.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  })}`
+
 }
 
 // Format exact amount for details modal
