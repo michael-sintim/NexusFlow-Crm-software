@@ -39,15 +39,13 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
             'description', 'task_count', 'age_days', 'created_at', 
             'updated_at', 'closed_date'
         ]
-        read_only_fields = ['id', 'owner', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'owner', 'created_at', 'updated_at', 'closed_date']
     
     def get_task_count(self, obj):
         return obj.tasks.count()
     
     def get_age_days(self, obj):
-        from datetime import datetime
-        delta = datetime.now().date() - obj.created_at.date()
-        return delta.days
+        return obj.age_days  # Now uses the model property
     
     def validate_probability(self, value):
         if not 0 <= value <= 100:
@@ -64,3 +62,7 @@ class OpportunityDetailSerializer(serializers.ModelSerializer):
         if value and value < date.today():
             raise serializers.ValidationError("Expected close date cannot be in the past.")
         return value
+    
+    def update(self, instance, validated_data):
+        # Handle any special update logic here
+        return super().update(instance, validated_data)

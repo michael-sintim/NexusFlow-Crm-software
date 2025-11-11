@@ -5,32 +5,61 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 
 const localizer = momentLocalizer(moment)
 
-const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, events = [] }) => {
-  // Remove the hardcoded events and use the events prop instead
-  // const events = [ ... ] // DELETE THIS MOCK DATA
-
-  // Transform events to react-big-calendar format
-  const calendarEvents = events.map(event => ({
-    id: event.id,
-    title: event.title,
-    start: new Date(event.start_time),
-    end: new Date(event.end_time),
-    allDay: event.all_day,
-    resource: {
-      ...event,
-      color: event.color || '#3788d8'
+const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, events }) => {
+  // Safe events handling - ensure events is always an array
+  const safeEvents = React.useMemo(() => {
+    if (!events) {
+      console.warn('Events is null or undefined, using empty array')
+      return []
     }
-  }))
+    
+    if (!Array.isArray(events)) {
+      console.warn('Events is not an array:', typeof events, events)
+      return []
+    }
+    
+    return events
+  }, [events])
+
+  // Safe transformation of events to react-big-calendar format
+  const calendarEvents = React.useMemo(() => {
+    return safeEvents.map(event => {
+      // Handle missing or invalid dates safely
+      let startDate, endDate
+      
+      try {
+        startDate = event.start_time ? new Date(event.start_time) : new Date()
+        endDate = event.end_time ? new Date(event.end_time) : new Date(startDate.getTime() + 60 * 60 * 1000) // Default 1 hour
+      } catch (error) {
+        console.warn('Invalid date in event:', event, error)
+        startDate = new Date()
+        endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
+      }
+
+      return {
+        id: event.id || Date.now().toString() + Math.random(), // Fallback ID
+        title: event.title || 'Untitled Event',
+        start: startDate,
+        end: endDate,
+        allDay: event.all_day || event.is_all_day || false, // Handle different field names
+        resource: event // Pass the original event data
+      }
+    })
+  }, [safeEvents])
 
   const handleSelectEvent = (event) => {
-    onEventClick(event.resource) // Pass the original event data
+    if (onEventClick && event.resource) {
+      onEventClick(event.resource)
+    }
   }
 
   const handleSelectSlot = (slotInfo) => {
-    onSlotClick({
-      start: slotInfo.start,
-      end: slotInfo.end
-    })
+    if (onSlotClick) {
+      onSlotClick({
+        start: slotInfo.start,
+        end: slotInfo.end
+      })
+    }
   }
 
   const eventStyleGetter = (event) => {
@@ -50,7 +79,7 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, eve
     <div className="h-full [&_.rbc-calendar]:font-inherit [&_.rbc-calendar]:text-sm">
       <Calendar
         localizer={localizer}
-        events={calendarEvents} // Use the transformed events
+        events={calendarEvents}
         startAccessor="start"
         endAccessor="end"
         view={currentView}
@@ -64,7 +93,6 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, eve
         step={30}
         showMultiDayTimes
         popup
-        // Your existing custom class names...
         className="[&_.rbc-header]:px-1 [&_.rbc-header]:py-2 [&_.rbc-header]:font-semibold 
                    [&_.rbc-header]:text-gray-900 [&_.rbc-header]:dark:text-gray-100 
                    [&_.rbc-header]:border-b [&_.rbc-header]:border-gray-200 [&_.rbc-header]:dark:border-gray-700

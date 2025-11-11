@@ -214,39 +214,26 @@ export const analyticsAPI = {
 // ==============================
 
 export const calendarAPI = {
+  // Events CRUD - Updated to match your new backend structure
+  getAll: (params = {}) => get('/calendar/events/', params),
+  getById: (id) => get(`/calendar/events/${id}/`),
+  create: (data) => post('/calendar/events/', data),
+  update: (id, data) => put(`/calendar/events/${id}/`, data),
+  delete: (id) => del(`/calendar/events/${id}/`),
+  
+  // Specific calendar endpoints
+  getUpcoming: () => get('/calendar/events/upcoming/'),
+  getToday: () => get('/calendar/events/today/'),
+  
+  // For backward compatibility with existing frontend components
   getEvents: (params = {}) => get('/calendar/events/', params),
   createEvent: (data) => post('/calendar/events/', data),
   updateEvent: (id, data) => put(`/calendar/events/${id}/`, data),
   deleteEvent: (id) => del(`/calendar/events/${id}/`),
   getUpcomingEvents: () => get('/calendar/events/upcoming/'),
-}
-
-// ==============================
-// 🏢 COMPANY API
-// ==============================
-
-export const companyAPI = {
-  getProfile: () => get('/company/profile/'),
-  updateProfile: (data) => put('/company/profile/', data),
-  getTeam: () => get('/company/team/'),
-  inviteMember: (data) => post('/company/team/invite/', data),
-}
-
-// ==============================
-// 🔧 SYSTEM API
-// ==============================
-
-export const systemAPI = {
-  // Health check
-  health: () => get('/system/health/'),
   
-  // Settings
-  getSettings: () => get('/system/settings/'),
-  updateSettings: (data) => put('/system/settings/', data),
-  
-  // Backup
-  createBackup: () => post('/system/backup/'),
-  getBackups: () => get('/system/backups/'),
+  // Event status management
+  changeEventStatus: (id, status) => patch(`/calendar/events/${id}/`, { status }),
 }
 
 // ==============================

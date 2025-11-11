@@ -1,7 +1,4 @@
 from django.db import models
-
-# Create your models here.
-from django.db import models
 from django.contrib.auth import get_user_model
 from contacts.models import Contact
 import uuid
@@ -41,4 +38,9 @@ class Opportunity(models.Model):
     
     def __str__(self):
         return f"{self.title} - {self.get_stage_display()}"
-
+    
+    @property
+    def age_days(self):
+        from datetime import datetime
+        delta = datetime.now().date() - self.created_at.date()
+        return delta.days

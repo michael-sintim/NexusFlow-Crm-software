@@ -1,7 +1,8 @@
 // src/components/pipeline/KanbanBoard.jsx
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDataStore } from '../../store/dataStore'
-import { MoreHorizontal, User, Building, DollarSign, Edit, Trash2, Eye, ArrowLeft } from 'lucide-react'
+import { contactsAPI } from '../../services/api'
+import { MoreHorizontal, User, Building, DollarSign, Edit, Trash2, Eye, ArrowLeft, X, FileText, Calendar, Target } from 'lucide-react'
 
 // Match these with your Django backend STAGE_CHOICES
 const DEAL_STAGES = [
@@ -84,6 +85,306 @@ const DeleteConfirmationModal = ({ opportunity, onClose, onConfirm }) => {
   )
 }
 
+// Edit Opportunity Modal
+const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
+  const [formData, setFormData] = useState({
+    title: opportunity?.title || '',
+    contact: opportunity?.contact?.id || '',
+    stage: opportunity?.stage || 'prospect',
+    value: opportunity?.value || 0,
+    expected_close_date: opportunity?.expected_close_date || '',
+    description: opportunity?.description || ''
+  })
+
+  const [errors, setErrors] = useState({})
+  const [saving, setSaving] = useState(false)
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }))
+    }
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+    
+    if (!formData.title.trim()) {
+      newErrors.title = 'Title is required'
+    }
+    
+    if (!formData.contact) {
+      newErrors.contact = 'Contact is required'
+    }
+    
+    if (!formData.stage) {
+      newErrors.stage = 'Stage is required'
+    }
+    
+    if (!formData.value || parseFloat(formData.value) <= 0) {
+      newErrors.value = 'Value must be greater than 0'
+    }
+
+    if (formData.expected_close_date) {
+      const selectedDate = new Date(formData.expected_close_date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      if (selectedDate < today) {
+        newErrors.expected_close_date = 'Close date cannot be in the past'
+      }
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!validateForm()) return
+
+    setSaving(true)
+    try {
+      await onSave(formData)
+      onClose()
+    } catch (error) {
+      console.error('Failed to save opportunity:', error)
+      setErrors({ submit: 'Failed to save opportunity. Please try again.' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const stageOptions = [
+    { value: 'prospect', label: 'Prospect' },
+    { value: 'qualified', label: 'Qualified' },
+    { value: 'proposal', label: 'Proposal' },
+    { value: 'negotiation', label: 'Negotiation' },
+    { value: 'closed_won', label: 'Closed Won' },
+    { value: 'closed_lost', label: 'Closed Lost' },
+  ]
+
+  if (!opportunity) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Edit Opportunity
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Update opportunity information
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {errors.submit && (
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-red-600 dark:text-red-400 text-sm">{errors.submit}</p>
+            </div>
+          )}
+
+          {/* Basic Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+              <FileText className="h-5 w-5 mr-2 text-blue-500" />
+              Opportunity Details
+            </h3>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Opportunity Title *
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
+                  errors.title ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                }`}
+                placeholder="Enter opportunity title"
+              />
+              {errors.title && (
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.title}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                  <User className="h-4 w-4 mr-2 text-gray-400" />
+                  Contact *
+                </label>
+                <select
+                  name="contact"
+                  value={formData.contact}
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
+                    errors.contact ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                >
+                  <option value="">Select a contact</option>
+                  {contacts.map(contact => (
+                    <option key={contact.id} value={contact.id}>
+                      {contact.first_name} {contact.last_name} 
+                      {contact.company_name && ` - ${contact.company_name}`}
+                    </option>
+                  ))}
+                </select>
+                {errors.contact && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.contact}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                  <Target className="h-4 w-4 mr-2 text-gray-400" />
+                  Stage *
+                </label>
+                <select
+                  name="stage"
+                  value={formData.stage}
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
+                    errors.stage ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                >
+                  {stageOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.stage && (
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.stage}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Financial Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+              <DollarSign className="h-5 w-5 mr-2 text-green-500" />
+              Financial Details
+            </h3>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Value *
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                name="value"
+                value={formData.value}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
+                  errors.value ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                }`}
+                placeholder="0.00"
+              />
+              {errors.value && (
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.value}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Timeline */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+              <Calendar className="h-5 w-5 mr-2 text-orange-500" />
+              Timeline
+            </h3>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Expected Close Date
+              </label>
+              <input
+                type="date"
+                name="expected_close_date"
+                value={formData.expected_close_date}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
+                  errors.expected_close_date ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                }`}
+              />
+              {errors.expected_close_date && (
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.expected_close_date}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Additional Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+              <FileText className="h-5 w-5 mr-2 text-purple-500" />
+              Additional Information
+            </h3>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors duration-200 placeholder-gray-500 dark:placeholder-gray-400"
+                placeholder="Describe this opportunity, including key requirements, decision makers, and any specific details..."
+              />
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? 'Saving...' : 'Update Opportunity'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // Opportunity Details Modal (without probability, with exact amount)
 const OpportunityDetailsModal = ({ opportunity, onClose, onEdit, onDelete }) => {
   if (!opportunity) return null
@@ -148,7 +449,16 @@ const OpportunityDetailsModal = ({ opportunity, onClose, onEdit, onDelete }) => 
                   {formatExactAmount(opportunity.value)}
                 </p>
               </div>
-              {/* Probability removed from view details */}
+              {opportunity.expected_close_date && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Expected Close Date
+                  </label>
+                  <p className="text-gray-900 dark:text-white">
+                    {new Date(opportunity.expected_close_date).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -230,16 +540,16 @@ const OpportunityDetailsModal = ({ opportunity, onClose, onEdit, onDelete }) => 
         <div className="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={onDelete}
-            className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-2"
           >
-            <Trash2 className="h-4 w-4 inline mr-2" />
+            <Trash2 className="h-4 w-4" />
             Delete
           </button>
           <button
             onClick={onEdit}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2"
           >
-            <Edit className="h-4 w-4 inline mr-2" />
+            <Edit className="h-4 w-4" />
             Edit Opportunity
           </button>
         </div>
@@ -438,11 +748,45 @@ const StageColumn = ({ stage, opportunities, onView, onEdit, onDelete }) => {
 
 // Main Kanban Board Component
 const KanbanBoard = ({ opportunities, onContactClick }) => {
-  const { deleteOpportunity } = useDataStore()
+  const { deleteOpportunity, updateOpportunity } = useDataStore()
   const [selectedOpportunity, setSelectedOpportunity] = useState(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [opportunityToDelete, setOpportunityToDelete] = useState(null)
+  const [contacts, setContacts] = useState([])
+  const [loadingContacts, setLoadingContacts] = useState(false)
+
+  // Fetch contacts from API like the OpportunityForm component
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        setLoadingContacts(true)
+        console.log('🔍 KanbanBoard: Fetching contacts from API...')
+        
+        const response = await contactsAPI.getAll()
+        console.log('📋 KanbanBoard: Contacts API response:', response)
+        
+        // Handle paginated response structure (results) or direct array
+        const contactsData = response.data.results || response.data || []
+        console.log('👥 KanbanBoard: Contacts data:', {
+          data: contactsData,
+          type: typeof contactsData,
+          isArray: Array.isArray(contactsData),
+          length: Array.isArray(contactsData) ? contactsData.length : 'N/A'
+        })
+        
+        setContacts(contactsData)
+      } catch (err) {
+        console.error('❌ KanbanBoard: Failed to fetch contacts:', err)
+        console.log('Error details:', err.response)
+        setContacts([]) // Ensure contacts is always an array
+      } finally {
+        setLoadingContacts(false)
+      }
+    }
+    fetchContacts()
+  }, [])
 
   const handleViewOpportunity = (opportunity) => {
     setSelectedOpportunity(opportunity)
@@ -450,10 +794,14 @@ const KanbanBoard = ({ opportunities, onContactClick }) => {
   }
 
   const handleEditOpportunity = (opportunity) => {
-    // Navigate to edit page - replace with your actual edit route
-    console.log('Edit opportunity:', opportunity)
-    // Example: navigate(`/opportunities/${opportunity.id}/edit`)
-    // Or open an edit modal if you have one
+    setSelectedOpportunity(opportunity)
+    setShowEditModal(true)
+  }
+
+  const handleSaveOpportunity = async (formData) => {
+    if (selectedOpportunity) {
+      await updateOpportunity(selectedOpportunity.id, formData)
+    }
   }
 
   const handleDeleteOpportunity = (opportunity) => {
@@ -467,7 +815,6 @@ const KanbanBoard = ({ opportunities, onContactClick }) => {
         await deleteOpportunity(opportunityToDelete.id)
         setShowDeleteModal(false)
         setOpportunityToDelete(null)
-        // The store should automatically refresh the data
       } catch (error) {
         console.error('Failed to delete opportunity:', error)
         alert('Failed to delete opportunity. Please try again.')
@@ -477,6 +824,7 @@ const KanbanBoard = ({ opportunities, onContactClick }) => {
 
   const handleCloseModals = () => {
     setShowDetailsModal(false)
+    setShowEditModal(false)
     setShowDeleteModal(false)
     setSelectedOpportunity(null)
     setOpportunityToDelete(null)
@@ -507,12 +855,22 @@ const KanbanBoard = ({ opportunities, onContactClick }) => {
           onClose={handleCloseModals}
           onEdit={() => {
             handleEditOpportunity(selectedOpportunity)
-            handleCloseModals()
+            setShowDetailsModal(false)
           }}
           onDelete={() => {
             handleDeleteOpportunity(selectedOpportunity)
-            handleCloseModals()
+            setShowDetailsModal(false)
           }}
+        />
+      )}
+
+      {/* Edit Opportunity Modal */}
+      {showEditModal && (
+        <EditOpportunityModal
+          opportunity={selectedOpportunity}
+          contacts={contacts}
+          onClose={handleCloseModals}
+          onSave={handleSaveOpportunity}
         />
       )}
 

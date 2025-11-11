@@ -1,6 +1,5 @@
-# calendar/views.py
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
+# calendar_app/views.py
+from rest_framework import generics, status
 from rest_framework.response import Response
 from django.db.models import Q
 from django.utils import timezone
@@ -8,7 +7,7 @@ from datetime import datetime, timedelta
 from .models import CalendarEvent, EventReminder
 from .serializers import CalendarEventSerializer, EventReminderSerializer
 
-class CalendarEventViewSet(viewsets.ModelViewSet):
+class EventListCreate(generics.ListCreateAPIView):
     serializer_class = CalendarEventSerializer
     
     def get_queryset(self):
@@ -46,50 +45,73 @@ class CalendarEventViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+class EventDetail(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = CalendarEventSerializer
     
-    @action(detail=False, methods=['get'])
-    def upcoming(self, request):
-        """Get upcoming events for the current user"""
-        now = timezone.now()
-        week_later = now + timedelta(days=7)
-        
-        events = self.get_queryset().filter(
-            start_time__range=(now, week_later),
-            status__in=['scheduled', 'in_progress']
-        ).order_by('start_time')[:10]
-        
-        serializer = self.get_serializer(events, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        queryset = CalendarEvent.objects.all()
+        user = self.request.user
+        if not user.is_staff:
+            queryset = queryset.filter(assigned_to=user)
+        return queryset.select_related(
+            'assigned_to', 'created_by', 'customer', 'opportunity'
+        )
     
-    @action(detail=False, methods=['get'])
-    def today(self, request):
-        """Get today's events"""
-        today = timezone.now().date()
-        tomorrow = today + timedelta(days=1)
-        
-        events = self.get_queryset().filter(
-            start_time__date=today
-        ).order_by('start_time')
-        
-        serializer = self.get_serializer(events, many=True)
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['post'])
-    def change_status(self, request, pk=None):
-        """Change event status"""
+    def patch(self, request, *args, **kwargs):
+        """Handle status changes and partial updates"""
         event = self.get_object()
-        new_status = request.data.get('status')
         
-        if new_status in dict(CalendarEvent.STATUS_CHOICES):
+        # Check if this is a status change request
+        new_status = request.data.get('status')
+        if new_status and new_status in dict(CalendarEvent.STATUS_CHOICES):
             event.status = new_status
             event.save()
             return Response({'status': 'Status updated'})
         
-        return Response(
-            {'error': 'Invalid status'}, 
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        # Otherwise, perform normal update
+        return self.partial_update(request, *args, **kwargs)
 
-class EventReminderViewSet(viewsets.ModelViewSet):
+class UpcomingEvents(generics.ListAPIView):
+    serializer_class = CalendarEventSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        now = timezone.now()
+        week_later = now + timedelta(days=7)
+        
+        queryset = CalendarEvent.objects.filter(
+            start_time__range=(now, week_later),
+            status__in=['scheduled', 'in_progress']
+        )
+        
+        if not user.is_staff:
+            queryset = queryset.filter(assigned_to=user)
+            
+        return queryset.order_by('start_time')[:10]
+
+class TodayEvents(generics.ListAPIView):
+    serializer_class = CalendarEventSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        today = timezone.now().date()
+        tomorrow = today + timedelta(days=1)
+        
+        queryset = CalendarEvent.objects.filter(
+            start_time__date=today
+        )
+        
+        if not user.is_staff:
+            queryset = queryset.filter(assigned_to=user)
+            
+        return queryset.order_by('start_time')
+
+# Keep your existing EventReminder views if needed
+class EventReminderListCreate(generics.ListCreateAPIView):
+    serializer_class = EventReminderSerializer
+    queryset = EventReminder.objects.all()
+
+class EventReminderDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = EventReminderSerializer
     queryset = EventReminder.objects.all()

@@ -1,12 +1,10 @@
-# calendar/urls.py
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import CalendarEventViewSet, EventReminderViewSet
-
-router = DefaultRouter()
-router.register(r'events', CalendarEventViewSet, basename='events')
-router.register(r'reminders', EventReminderViewSet, basename='reminders')
+# calendar_app/urls.py
+from django.urls import path
+from . import views
 
 urlpatterns = [
-    path('calendar/', include(router.urls)),
+    path('events/', views.EventListCreate.as_view(), name='event-list'),
+    path('events/<int:pk>/', views.EventDetail.as_view(), name='event-detail'),
+    path('events/upcoming/', views.UpcomingEvents.as_view(), name='upcoming-events'),
+    path('events/today/', views.TodayEvents.as_view(), name='today-events'),
 ]

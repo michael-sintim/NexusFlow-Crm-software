@@ -1,31 +1,37 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Calendar, Clock, CheckCircle, PlayCircle, MoreVertical, User, Target, Edit, Trash2, Eye } from 'lucide-react'
+import { Calendar, Clock, CheckCircle, PlayCircle, MoreVertical, User, Target, Edit, Trash2, Eye, RotateCw } from 'lucide-react'
 import { formatDateTime } from '../../lib/utils'
 import { useDataStore } from '../../store/dataStore'
 import { useNavigate } from 'react-router-dom'
 
 const TaskItem = ({ task }) => {
-  const { complete, start, deleteTask } = useDataStore()
+  const { updateTask, deleteTask, fetchTasks } = useDataStore()
   const navigate = useNavigate()
   const [showActions, setShowActions] = React.useState(false)
   const [isDeleting, setIsDeleting] = React.useState(false)
 
-  const handleComplete = async (e) => {
+  // Function to cycle task status
+  const cycleTaskStatus = async (e) => {
     e.stopPropagation()
-    try {
-      await complete(task.id)
-    } catch (error) {
-      console.error('Failed to complete task:', error)
+    
+    const statusCycle = {
+      'open': 'in_progress',
+      'in_progress': 'completed', 
+      'completed': 'open'
     }
-  }
 
-  const handleStart = async (e) => {
-    e.stopPropagation()
+    const newStatus = statusCycle[task.status] || 'open'
+    
     try {
-      await start(task.id)
+      await updateTask(task.id, { 
+        ...task, 
+        status: newStatus 
+      })
+      // Refresh tasks to get updated data
+      fetchTasks()
     } catch (error) {
-      console.error('Failed to start task:', error)
+      console.error('Error updating task status:', error)
     }
   }
 
@@ -75,6 +81,31 @@ const TaskItem = ({ task }) => {
     other: '📝',
   }
 
+  // Status button configuration
+  const statusConfig = {
+    open: {
+      icon: PlayCircle,
+      label: 'Start Task',
+      className: 'p-1.5 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors mt-0.5',
+      iconClassName: 'h-4 w-4 text-gray-400 hover:text-blue-500'
+    },
+    in_progress: {
+      icon: CheckCircle,
+      label: 'Complete Task',
+      className: 'p-1.5 rounded-full border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors mt-0.5',
+      iconClassName: 'h-4 w-4 text-primary-600 dark:text-primary-400 hover:text-green-500'
+    },
+    completed: {
+      icon: RotateCw,
+      label: 'Reopen Task',
+      className: 'p-1.5 rounded-full border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors mt-0.5',
+      iconClassName: 'h-4 w-4 text-green-600 dark:text-green-400 hover:text-blue-500'
+    }
+  }
+
+  const currentStatus = statusConfig[task.status] || statusConfig.open
+  const StatusIcon = currentStatus.icon
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -88,30 +119,14 @@ const TaskItem = ({ task }) => {
     >
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-3 flex-1">
-          {/* Status Button */}
-          {task.status === 'open' && (
-            <button
-              onClick={handleStart}
-              className="p-1.5 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors mt-0.5"
-            >
-              <PlayCircle className="h-4 w-4 text-gray-400 hover:text-blue-500" />
-            </button>
-          )}
-          
-          {task.status === 'in_progress' && (
-            <button
-              onClick={handleComplete}
-              className="p-1.5 rounded-full border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors mt-0.5"
-            >
-              <CheckCircle className="h-4 w-4 text-primary-600 dark:text-primary-400 hover:text-green-500" />
-            </button>
-          )}
-          
-          {task.status === 'completed' && (
-            <div className="p-1.5 rounded-full border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 mt-0.5">
-              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-            </div>
-          )}
+          {/* Status Button - Now cycles through all statuses */}
+          <button
+            onClick={cycleTaskStatus}
+            className={currentStatus.className}
+            title={currentStatus.label}
+          >
+            <StatusIcon className={currentStatus.iconClassName} />
+          </button>
 
           {/* Task Content */}
           <div className="flex-1 min-w-0">
