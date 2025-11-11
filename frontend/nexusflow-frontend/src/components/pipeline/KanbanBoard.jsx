@@ -16,6 +16,13 @@ const DEAL_STAGES = [
 const OpportunityCard = ({ opportunity, onContactClick }) => {
   const stage = DEAL_STAGES.find(s => s.id === opportunity.stage)
   
+  // Fix data structure mismatch
+  const opportunityName = opportunity.name || opportunity.title || 'Unnamed Opportunity'
+  const companyName = opportunity.company || opportunity.contact_details?.company || 'No company'
+  const contactName = opportunity.contact_name || 
+    `${opportunity.contact_details?.first_name || ''} ${opportunity.contact_details?.last_name || ''}`.trim() || 
+    'No contact'
+  
   const handleDragStart = (e) => {
     e.dataTransfer.setData('opportunityId', opportunity.id.toString())
     e.dataTransfer.setData('currentStage', opportunity.stage)
@@ -30,7 +37,7 @@ const OpportunityCard = ({ opportunity, onContactClick }) => {
     >
       <div className="flex items-start justify-between mb-2">
         <h4 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors text-sm line-clamp-1">
-          {opportunity.name}
+          {opportunityName}
         </h4>
         <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded">
           <MoreHorizontal className="h-3 w-3 text-gray-400" />
@@ -40,12 +47,12 @@ const OpportunityCard = ({ opportunity, onContactClick }) => {
       <div className="space-y-1.5">
         <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
           <Building className="h-3 w-3 flex-shrink-0" />
-          <span className="truncate">{opportunity.company}</span>
+          <span className="truncate">{companyName}</span>
         </div>
         
         <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
           <User className="h-3 w-3 flex-shrink-0" />
-          <span className="truncate">{opportunity.contact_name}</span>
+          <span className="truncate">{contactName}</span>
         </div>
         
         {opportunity.value && (

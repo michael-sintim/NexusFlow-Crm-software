@@ -49,14 +49,15 @@ const PipelinePage = () => {
       ).length
       const wonOpportunities = opportunities.filter(opp => 
         opp?.stage && ['won', 'closed_won'].includes(opp.stage)
-      ).length
+      )
+      const wonValue = wonOpportunities.reduce((sum, opp) => sum + (parseFloat(opp?.value) || 0), 0)
       const totalOpportunities = opportunities.length
 
       return {
         totalValue,
         activeOpportunities,
-        wonOpportunities,
-        winRate: totalOpportunities > 0 ? Math.round((wonOpportunities / totalOpportunities) * 100) : 0,
+        wonValue,
+        winRate: totalOpportunities > 0 ? Math.round((wonOpportunities.length / totalOpportunities) * 100) : 0,
         avgDealSize: totalOpportunities > 0 ? totalValue / totalOpportunities : 0
       }
     } catch (error) {
@@ -64,7 +65,7 @@ const PipelinePage = () => {
       return {
         totalValue: 0,
         activeOpportunities: 0,
-        wonOpportunities: 0,
+        wonValue: 0,
         winRate: 0,
         avgDealSize: 0
       }
@@ -168,8 +169,8 @@ const PipelinePage = () => {
           
           <MetricCard
             title="Deals Won"
-            value={metrics.wonOpportunities.toString()}
-            subtitle="Successful closures"
+            value={`$${(metrics.wonValue / 1000).toFixed(1)}K`}
+            subtitle="Amount closed"
             icon={<Trophy className="h-6 w-6" />}
             color="purple"
           />
