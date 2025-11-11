@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import CalendarView from '../components/calendar/CalendarView'
 import CalendarToolbar from '../components/calendar/CalendarToolbar'
-import CalendarSidebar from '../components/calendar/CalendarSidebar'
 import EventModal from '../components/calendar/Eventsmodal'
 
 const CalendarPage = () => {
@@ -32,9 +31,9 @@ const CalendarPage = () => {
   }
 
   return (
-    <div className="flex h-screen pt-16">
-      {/* Main Calendar Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+    <div className="flex flex-col h-screen ">
+      {/* Calendar Toolbar - Full Width */}
+      <div className="flex-shrink-0">
         <CalendarToolbar 
           currentView={currentView}
           onViewChange={setCurrentView}
@@ -42,23 +41,17 @@ const CalendarPage = () => {
           onDateChange={setCurrentDate}
           onCreateEvent={handleCreateEvent}
         />
-        
-        <div className="flex-1 overflow-hidden">
-          <CalendarView 
-            currentView={currentView}
-            currentDate={currentDate}
-            onEventClick={handleEditEvent}
-            onSlotClick={handleCreateEvent}
-          />
-        </div>
       </div>
-
-      {/* Calendar Sidebar */}
-      <CalendarSidebar 
-        currentDate={currentDate}
-        onDateSelect={setCurrentDate}
-        onEventCreate={handleCreateEvent}
-      />
+      
+      {/* Main Calendar - Full Width */}
+      <div className="flex-1 overflow-hidden">
+        <CalendarView 
+          currentView={currentView}
+          currentDate={currentDate}
+          onEventClick={handleEditEvent}
+          onSlotClick={handleCreateEvent}
+        />
+      </div>
 
       {/* Event Modal */}
       <EventModal 

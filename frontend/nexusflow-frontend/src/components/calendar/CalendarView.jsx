@@ -84,7 +84,7 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick }) =
                    [&_.rbc-event]:p-1 [&_.rbc-event]:cursor-pointer
                    [&_.rbc-event]:focus:outline-none
                    
-                   [&_.rbc-today]:bg-blue-50 [&_.rbc-today]:dark:bg-blue-900/20
+                 [&_.rbc-today]:bg-blue-50 [&_.rbc-today]:dark:bg-blue-900/20
                    
                    [&_.rbc-off-range-bg]:bg-gray-50 [&_.rbc-off-range-bg]:dark:bg-gray-800
                    

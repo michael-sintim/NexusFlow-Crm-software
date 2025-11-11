@@ -4,13 +4,12 @@ import { useApi } from '../../hooks/useApi'
 import { opportunitiesAPI, contactsAPI } from '../../services/api'
 import Input from '../ui/Input'
 import Button from '../ui/Button'
-import { ArrowLeft, TrendingUp, Target, User, Calendar, DollarSign, Percent, FileText } from 'lucide-react'
+import { ArrowLeft, TrendingUp, Target, User, Calendar, DollarSign, FileText } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 const OpportunityForm = ({ initialData }) => {
   const { register, handleSubmit, formState: { errors }, watch, setError, clearErrors } = useForm({
     defaultValues: initialData || {
-      probability: 0,
       value: 0,
       stage: 'prospect'
     }
@@ -83,7 +82,6 @@ const OpportunityForm = ({ initialData }) => {
     { value: 'closed_lost', label: 'Closed Lost' },
   ]
 
-  const probability = watch('probability')
   const value = watch('value')
   const closeDate = watch('expected_close_date')
 
@@ -204,48 +202,19 @@ const OpportunityForm = ({ initialData }) => {
                 Financial Details
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
-                  label="Value"
-                  type="number"
-                  step="0.01"
-                  {...register('value', { 
-                    required: 'Value is required',
-                    min: { value: 0, message: 'Value must be positive' }
-                  })}
-                  error={errors.value?.message}
-                  placeholder="0.00"
-                  leftIcon={<DollarSign className="h-4 w-4 text-gray-400" />}
-                  value={value}
-                />
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                    <Percent className="h-4 w-4 mr-2 text-gray-400" />
-                    Probability ({probability}%)
-                  </label>
-                  <div className="space-y-2">
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      {...register('probability', {
-                        min: { value: 0, message: 'Probability must be between 0-100' },
-                        max: { value: 100, message: 'Probability must be between 0-100' }
-                      })}
-                      className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer slider accent-green-500"
-                    />
-                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                      <span>0%</span>
-                      <span>50%</span>
-                      <span>100%</span>
-                    </div>
-                  </div>
-                  {errors.probability && (
-                    <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.probability.message}</p>
-                  )}
-                </div>
-              </div>
+              <Input
+                label="Value"
+                type="number"
+                step="0.01"
+                {...register('value', { 
+                  required: 'Value is required',
+                  min: { value: 0, message: 'Value must be positive' }
+                })}
+                error={errors.value?.message}
+                placeholder="0.00"
+                leftIcon={<DollarSign className="h-4 w-4 text-gray-400" />}
+                value={value}
+              />
             </div>
 
             {/* Timeline */}
@@ -318,4 +287,4 @@ const OpportunityForm = ({ initialData }) => {
   )
 }
 
-export default OpportunityForm
+export default OpportunityForm  
