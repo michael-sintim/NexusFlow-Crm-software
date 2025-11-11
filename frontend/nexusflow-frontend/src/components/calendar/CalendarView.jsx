@@ -5,35 +5,25 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 
 const localizer = momentLocalizer(moment)
 
-const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick }) => {
-  // Mock events - replace with real data from your API
-  const events = [
-    {
-      id: '1',
-      title: 'Team Meeting',
-      start: new Date(2024, 0, 15, 10, 0),
-      end: new Date(2024, 0, 15, 11, 0),
-      resource: {
-        event_type: 'meeting',
-        status: 'scheduled',
-        color: '#3788d8'
-      }
-    },
-    {
-      id: '2',
-      title: 'Client Call',
-      start: new Date(2024, 0, 16, 14, 0),
-      end: new Date(2024, 0, 16, 15, 0),
-      resource: {
-        event_type: 'call',
-        status: 'scheduled',
-        color: '#10b981'
-      }
+const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, events = [] }) => {
+  // Remove the hardcoded events and use the events prop instead
+  // const events = [ ... ] // DELETE THIS MOCK DATA
+
+  // Transform events to react-big-calendar format
+  const calendarEvents = events.map(event => ({
+    id: event.id,
+    title: event.title,
+    start: new Date(event.start_time),
+    end: new Date(event.end_time),
+    allDay: event.all_day,
+    resource: {
+      ...event,
+      color: event.color || '#3788d8'
     }
-  ]
+  }))
 
   const handleSelectEvent = (event) => {
-    onEventClick(event)
+    onEventClick(event.resource) // Pass the original event data
   }
 
   const handleSelectSlot = (slotInfo) => {
@@ -60,7 +50,7 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick }) =
     <div className="h-full [&_.rbc-calendar]:font-inherit [&_.rbc-calendar]:text-sm">
       <Calendar
         localizer={localizer}
-        events={events}
+        events={calendarEvents} // Use the transformed events
         startAccessor="start"
         endAccessor="end"
         view={currentView}
@@ -74,7 +64,7 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick }) =
         step={30}
         showMultiDayTimes
         popup
-        // Custom class names for styling
+        // Your existing custom class names...
         className="[&_.rbc-header]:px-1 [&_.rbc-header]:py-2 [&_.rbc-header]:font-semibold 
                    [&_.rbc-header]:text-gray-900 [&_.rbc-header]:dark:text-gray-100 
                    [&_.rbc-header]:border-b [&_.rbc-header]:border-gray-200 [&_.rbc-header]:dark:border-gray-700
@@ -84,7 +74,7 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick }) =
                    [&_.rbc-event]:p-1 [&_.rbc-event]:cursor-pointer
                    [&_.rbc-event]:focus:outline-none
                    
-                 [&_.rbc-today]:bg-blue-50 [&_.rbc-today]:dark:bg-blue-900/20
+                   [&_.rbc-today]:bg-blue-50 [&_.rbc-today]:dark:bg-blue-900/20
                    
                    [&_.rbc-off-range-bg]:bg-gray-50 [&_.rbc-off-range-bg]:dark:bg-gray-800
                    

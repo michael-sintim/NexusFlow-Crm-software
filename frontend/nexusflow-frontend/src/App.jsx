@@ -77,6 +77,12 @@ function App() {
               <OpportunityForm />
             </ProtectedRoute>
           } />
+          {/* ADD OPPORTUNITY EDIT ROUTE */}
+          <Route path="/opportunities/:id/edit" element={
+            <ProtectedRoute>
+              <OpportunityForm />
+            </ProtectedRoute>
+          } />
           <Route path="/contacts/new" element={
             <ProtectedRoute>
               <ContactForm />

@@ -8,6 +8,7 @@ const CalendarPage = () => {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [currentView, setCurrentView] = useState('month')
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [events, setEvents] = useState([]) // ← ADD THIS STATE
 
   const handleCreateEvent = () => {
     setSelectedEvent(null)
@@ -26,7 +27,23 @@ const CalendarPage = () => {
 
   const handleSaveEvent = (eventData) => {
     console.log('Saving event:', eventData)
-    // TODO: Integrate with your API
+    
+    if (selectedEvent) {
+      // Update existing event
+      setEvents(events.map(event => 
+        event.id === selectedEvent.id 
+          ? { ...selectedEvent, ...eventData }
+          : event
+      ))
+    } else {
+      // Create new event
+      const newEvent = {
+        id: Date.now().toString(), // Generate unique ID
+        ...eventData
+      }
+      setEvents([...events, newEvent])
+    }
+    
     handleCloseModal()
   }
 
@@ -50,6 +67,7 @@ const CalendarPage = () => {
           currentDate={currentDate}
           onEventClick={handleEditEvent}
           onSlotClick={handleCreateEvent}
+          events={events} // ← PASS EVENTS TO CALENDAR VIEW
         />
       </div>
 
