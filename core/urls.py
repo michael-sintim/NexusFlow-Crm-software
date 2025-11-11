@@ -13,7 +13,7 @@ urlpatterns = [
     path('api/tasks/', include('tasks.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/analytics/', include('analytics.urls')),
-    # path('api/calendar/', include('calendar_app.urls')),
+    path('api/calendar/', include('calendar_app.urls')),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
