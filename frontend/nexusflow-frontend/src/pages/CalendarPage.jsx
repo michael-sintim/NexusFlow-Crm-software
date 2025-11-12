@@ -94,21 +94,10 @@ const CalendarPage = () => {
     setCurrentDate(new Date())
   }
 
-  // Event handlers
+  // Event handlers - Fixed with better error handling
   const handleCreateEvent = (date = null) => {
     setEventToEdit(null)
     setShowEventForm(true)
-    
-    // If a specific date is provided (from day click), pre-fill the form
-    if (date) {
-      // This will be handled in the EventForm component
-      setTimeout(() => {
-        const eventForm = document.querySelector('[data-preload-date]')
-        if (eventForm) {
-          eventForm.dataset.preloadDate = date.toISOString()
-        }
-      }, 100)
-    }
   }
 
   const handleEditEvent = (event) => {
@@ -131,13 +120,14 @@ const CalendarPage = () => {
         // Refresh events
         const params = getFetchParams()
         await fetchCalendarEvents(params)
-      } catch (error) {
-        console.error('Failed to delete event:', error)
+      } catch (err) {
+        console.error('❌ Failed to delete event:', err)
         alert('Failed to delete event. Please try again.')
       }
     }
   }
 
+  // Fixed save event function with better error handling
   const handleSaveEvent = async (eventData) => {
     try {
       console.log('💾 Saving event:', eventData)
@@ -149,7 +139,7 @@ const CalendarPage = () => {
         console.log('🆕 Creating new event')
         await createCalendarEvent(eventData)
         
-        // Show success message for new events
+        // Show success image for new events only
         setShowSuccess(true)
         setTimeout(() => setShowSuccess(false), 3000)
       }
@@ -162,10 +152,31 @@ const CalendarPage = () => {
       const params = getFetchParams()
       await fetchCalendarEvents(params)
       
-    } catch (error) {
-      console.error('❌ Failed to save event:', error)
-      alert('Failed to save event. Please try again.')
+    } catch (err) {
+      console.error('❌ Failed to save event:', err)
+      console.log('Error response:', err.response)
+      
+      // Show detailed error message
+      let errorMessage = 'Failed to save event. Please try again.'
+      if (err.response?.data) {
+        // Handle Django validation errors
+        if (typeof err.response.data === 'object') {
+          const errors = Object.entries(err.response.data)
+            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+            .join('\n')
+          errorMessage = `Validation errors:\n${errors}`
+        } else {
+          errorMessage = err.response.data
+        }
+      }
+      
+      alert(errorMessage)
     }
+  }
+
+  const handleCloseModal = () => {
+    setShowEventForm(false)
+    setEventToEdit(null)
   }
 
   // Filter and search events
@@ -249,6 +260,30 @@ const CalendarPage = () => {
       </div>
     </div>
   )
+
+  // Loading State Component
+  if (calendarEventsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading calendar events...</div>
+      </div>
+    )
+  }
+
+  // Error State Component
+  if (calendarEventsError) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-red-500 text-lg">{calendarEventsError}</div>
+        <button 
+          onClick={() => fetchCalendarEvents(getFetchParams())}
+          className="ml-4 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
@@ -383,28 +418,6 @@ const CalendarPage = () => {
           </div>
         </div>
 
-        {/* Loading State */}
-        {calendarEventsLoading && (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-gray-600 dark:text-gray-400 mt-4">Loading events...</p>
-          </div>
-        )}
-
-        {/* Error State */}
-        {calendarEventsError && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center mb-6">
-            <p className="text-red-600 dark:text-red-400">{calendarEventsError}</p>
-            <Button
-              onClick={() => fetchCalendarEvents(getFetchParams())}
-              variant="outline"
-              className="mt-4"
-            >
-              Retry
-            </Button>
-          </div>
-        )}
-
         {/* Calendar View */}
         {!calendarEventsLoading && !calendarEventsError && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -417,10 +430,7 @@ const CalendarPage = () => {
           <EventForm
             event={eventToEdit}
             onSave={handleSaveEvent}
-            onCancel={() => {
-              setShowEventForm(false)
-              setEventToEdit(null)
-            }}
+            onCancel={handleCloseModal}
             preloadDate={currentDate}
           />
         )}
@@ -464,14 +474,6 @@ const MonthView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
       // Event spans this day if it starts before this day ends and ends after this day starts
       return eventStart < nextDay && eventEnd > currentDay
     })
-  }
-
-  const isEventSpanning = (event, day) => {
-    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
-    const eventStart = new Date(event.start_time)
-    const eventEnd = new Date(event.end_time)
-    
-    return eventStart.getDate() !== day && eventEnd > date
   }
 
   const renderCalendarDays = () => {
@@ -718,7 +720,7 @@ const DayView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
   )
 }
 
-// List View Component (unchanged)
+// List View Component
 const ListView = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
   const [selectedEvent, setSelectedEvent] = useState(null)
 
@@ -843,7 +845,7 @@ const ListView = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
   )
 }
 
-// Event Details Modal Component (unchanged)
+// Event Details Modal Component
 const EventDetailsModal = ({ event, onEdit, onDelete, onClose }) => {
   const getEventIcon = (eventType) => {
     switch (eventType) {
