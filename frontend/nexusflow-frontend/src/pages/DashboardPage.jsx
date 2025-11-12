@@ -22,12 +22,35 @@ import RevenueChart from '../components/dashboard/RevenueChart'
 import { useNavigate } from 'react-router-dom'
 
 const DashboardPage = () => {
-  const { dashboardData, fetchDashboardData, tasks, opportunities, contacts, events } = useDataStore()
+  const { 
+    dashboardData, 
+    fetchDashboardData, 
+    tasks, 
+    fetchTasks,
+    opportunities, 
+    fetchOpportunities,
+    contacts, 
+    calendarEvents, 
+    fetchCalendarEvents 
+  } = useDataStore()
+  
   const navigate = useNavigate()
 
   React.useEffect(() => {
-    fetchDashboardData()
-  }, [fetchDashboardData])
+    // Fetch all necessary data when component mounts
+    const fetchAllData = async () => {
+      try {
+        await fetchDashboardData()
+        await fetchTasks()
+        await fetchCalendarEvents()
+        await fetchOpportunities()
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error)
+      }
+    }
+
+    fetchAllData()
+  }, [fetchDashboardData, fetchTasks, fetchCalendarEvents, fetchOpportunities])
 
   // Safely handle data - same logic as other pages
   const tasksArray = React.useMemo(() => {
@@ -38,13 +61,14 @@ const DashboardPage = () => {
     return []
   }, [tasks])
 
+  // Use calendarEvents instead of events to match Calendar page
   const eventsArray = React.useMemo(() => {
-    if (!events) return []
-    if (Array.isArray(events)) return events
-    if (events.results && Array.isArray(events.results)) return events.results
-    if (events.data && Array.isArray(events.data)) return events.data
+    if (!calendarEvents) return []
+    if (Array.isArray(calendarEvents)) return calendarEvents
+    if (calendarEvents.results && Array.isArray(calendarEvents.results)) return calendarEvents.results
+    if (calendarEvents.data && Array.isArray(calendarEvents.data)) return calendarEvents.data
     return []
-  }, [events])
+  }, [calendarEvents])
 
   const opportunitiesArray = React.useMemo(() => {
     if (!opportunities) return []
@@ -60,6 +84,7 @@ const DashboardPage = () => {
   // Get recent tasks (last 7 days)
   const recentTasks = tasksArray
     .filter(task => {
+      if (!task.created_at && !task.due_date) return false
       const taskDate = new Date(task.created_at || task.due_date)
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 7)
@@ -67,9 +92,10 @@ const DashboardPage = () => {
     })
     .slice(0, 5) // Limit to 5 most recent
 
-  // Get upcoming events (next 7 days)
+  // Get upcoming events (next 7 days) - using calendarEvents data
   const upcomingEvents = eventsArray
     .filter(event => {
+      if (!event.start_time && !event.created_at) return false
       const eventDate = new Date(event.start_time || event.created_at)
       const nextWeek = new Date()
       nextWeek.setDate(nextWeek.getDate() + 7)
@@ -80,6 +106,7 @@ const DashboardPage = () => {
   // Get recent opportunities (last 7 days)
   const recentOpportunities = opportunitiesArray
     .filter(opp => {
+      if (!opp.created_at) return false
       const oppDate = new Date(opp.created_at)
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 7)
@@ -156,12 +183,13 @@ const DashboardPage = () => {
     return <FileText className="h-4 w-4 text-gray-500" />
   }
 
-  // Get icon for event type
+  // Get icon for event type - matching Calendar page logic
   const getEventIcon = (event) => {
     if (event.event_type === 'meeting') return <Users className="h-4 w-4 text-blue-500" />
+    if (event.event_type === 'call') return <Phone className="h-4 w-4 text-purple-500" />
+    if (event.event_type === 'appointment') return <CheckCircle className="h-4 w-4 text-green-500" />
     if (event.event_type === 'deadline') return <Clock className="h-4 w-4 text-red-500" />
-    if (event.event_type === 'appointment') return <Calendar className="h-4 w-4 text-green-500" />
-    return <CalendarDays className="h-4 w-4 text-purple-500" />
+    return <CalendarDays className="h-4 w-4 text-gray-500" />
   }
 
   return (
