@@ -376,7 +376,7 @@ export const useDataStore = create((set, get) => ({
   clearTasksError: () => set({ tasksError: null }),
 
   /* =====================
-   * CALENDAR EVENTS
+   * CALENDAR EVENTS - FIXED
    * ===================== */
   calendarEvents: [],
   currentCalendarEvent: null,
@@ -386,15 +386,25 @@ export const useDataStore = create((set, get) => ({
   fetchCalendarEvents: async (params = {}) => {
     set({ calendarEventsLoading: true, calendarEventsError: null });
     try {
+      console.log('📅 Fetching calendar events with params:', params);
       const response = await calendarAPI.getAll(params);
-      const eventsData = response.data.results || response.data;
+      console.log('📅 Calendar events response:', response.data);
       
-      set({ calendarEvents: eventsData, calendarEventsLoading: false });
+      const eventsData = response.data.results || response.data || [];
+      
+      set({ 
+        calendarEvents: eventsData, 
+        calendarEventsLoading: false 
+      });
       return eventsData;
     } catch (error) {
+      console.error('❌ Calendar events fetch error:', error);
+      const errorMessage = error.response?.data || error.message || 'Failed to fetch calendar events';
+      
       set({
-        calendarEventsError: error.response?.data || 'Failed to fetch calendar events',
+        calendarEventsError: errorMessage,
         calendarEventsLoading: false,
+        calendarEvents: []
       });
       throw error;
     }
@@ -403,12 +413,19 @@ export const useDataStore = create((set, get) => ({
   fetchCalendarEvent: async (id) => {
     set({ calendarEventsLoading: true, calendarEventsError: null });
     try {
+      console.log(`📅 Fetching calendar event ${id}`);
       const response = await calendarAPI.getById(id);
-      set({ currentCalendarEvent: response.data, calendarEventsLoading: false });
+      set({ 
+        currentCalendarEvent: response.data, 
+        calendarEventsLoading: false 
+      });
       return response.data;
     } catch (error) {
+      console.error(`❌ Calendar event ${id} fetch error:`, error);
+      const errorMessage = error.response?.data || error.message || 'Failed to fetch calendar event';
+      
       set({
-        calendarEventsError: error.response?.data || 'Failed to fetch calendar event',
+        calendarEventsError: errorMessage,
         calendarEventsLoading: false,
       });
       throw error;
@@ -418,6 +435,7 @@ export const useDataStore = create((set, get) => ({
   createCalendarEvent: async (data) => {
     set({ calendarEventsLoading: true, calendarEventsError: null });
     try {
+      console.log('📅 Creating calendar event:', data);
       const response = await calendarAPI.create(data);
       set(state => ({ 
         calendarEvents: [response.data, ...state.calendarEvents],
@@ -425,8 +443,11 @@ export const useDataStore = create((set, get) => ({
       }));
       return response.data;
     } catch (error) {
+      console.error('❌ Calendar event creation error:', error);
+      const errorMessage = error.response?.data || error.message || 'Failed to create calendar event';
+      
       set({
-        calendarEventsError: error.response?.data || 'Failed to create calendar event',
+        calendarEventsError: errorMessage,
         calendarEventsLoading: false,
       });
       throw error;
@@ -436,6 +457,7 @@ export const useDataStore = create((set, get) => ({
   updateCalendarEvent: async (id, data) => {
     set({ calendarEventsLoading: true, calendarEventsError: null });
     try {
+      console.log(`📅 Updating calendar event ${id}:`, data);
       const response = await calendarAPI.update(id, data);
       set(state => ({
         calendarEvents: state.calendarEvents.map(event => 
@@ -448,8 +470,11 @@ export const useDataStore = create((set, get) => ({
       }));
       return response.data;
     } catch (error) {
+      console.error(`❌ Calendar event ${id} update error:`, error);
+      const errorMessage = error.response?.data || error.message || 'Failed to update calendar event';
+      
       set({
-        calendarEventsError: error.response?.data || 'Failed to update calendar event',
+        calendarEventsError: errorMessage,
         calendarEventsLoading: false,
       });
       throw error;
@@ -459,6 +484,7 @@ export const useDataStore = create((set, get) => ({
   deleteCalendarEvent: async (id) => {
     set({ calendarEventsLoading: true, calendarEventsError: null });
     try {
+      console.log(`📅 Deleting calendar event ${id}`);
       await calendarAPI.delete(id);
       set(state => ({
         calendarEvents: state.calendarEvents.filter(event => event.id !== id),
@@ -466,8 +492,11 @@ export const useDataStore = create((set, get) => ({
         calendarEventsLoading: false
       }));
     } catch (error) {
+      console.error(`❌ Calendar event ${id} deletion error:`, error);
+      const errorMessage = error.response?.data || error.message || 'Failed to delete calendar event';
+      
       set({
-        calendarEventsError: error.response?.data || 'Failed to delete calendar event',
+        calendarEventsError: errorMessage,
         calendarEventsLoading: false,
       });
       throw error;

@@ -1,11 +1,8 @@
-# calendar/serializers.py
 from rest_framework import serializers
 from .models import CalendarEvent, EventReminder
 from contacts.serializers import ContactListSerializer
 from opportunities.serializers import OpportunityListSerializer
 from django.contrib.auth import get_user_model
-# calendar_app/views.py
-
 
 User = get_user_model()
 
@@ -16,6 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class CalendarEventSerializer(serializers.ModelSerializer):
     created_by_details = UserSerializer(source='created_by', read_only=True)
+    assigned_to_details = UserSerializer(source='assigned_to', read_only=True)
     customer_details = ContactListSerializer(source='customer', read_only=True)
     opportunity_details = OpportunityListSerializer(source='opportunity', read_only=True)
     duration = serializers.ReadOnlyField()
@@ -25,9 +23,9 @@ class CalendarEventSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'description', 'event_type', 'start_time', 'end_time',
             'all_day', 'customer', 'customer_details', 'opportunity', 'opportunity_details',
-            'created_by', 'created_by_details', 'status', 'reminder_minutes', 
-            'is_recurring', 'recurrence_rule', 'recurrence_end', 'color',  'location',
-            'duration', 'created_at', 'updated_at'
+            'assigned_to', 'assigned_to_details', 'created_by', 'created_by_details', 
+            'status', 'reminder_minutes', 'is_recurring', 'recurrence_rule', 
+            'recurrence_end', 'color', 'location', 'duration', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_by', 'created_at', 'updated_at']
 
@@ -37,7 +35,9 @@ class CalendarEventSerializer(serializers.ModelSerializer):
         user = request.user if request and hasattr(request, 'user') else None
         
         if user:
-            validated_data['assigned_to'] = user
+            # If assigned_to is not provided, assign to current user
+            if 'assigned_to' not in validated_data:
+                validated_data['assigned_to'] = user
             validated_data['created_by'] = user
         else:
             # Fallback: get the first active user
@@ -51,9 +51,9 @@ class CalendarEventSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        # Prevent assigned_to from being changed via API since it's auto-assigned
-        if 'assigned_to' in validated_data:
-            del validated_data['assigned_to']
+        # Prevent created_by from being changed
+        if 'created_by' in validated_data:
+            del validated_data['created_by']
         return super().update(instance, validated_data)
 
 class EventReminderSerializer(serializers.ModelSerializer):

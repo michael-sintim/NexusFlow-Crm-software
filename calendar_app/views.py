@@ -1,4 +1,3 @@
-# calendar_app/views.py
 from rest_framework import generics, status
 from rest_framework.response import Response
 from django.db.models import Q
@@ -12,7 +11,6 @@ from django.views.decorators.cache import never_cache
 @method_decorator(never_cache, name='dispatch')
 class EventListCreate(generics.ListCreateAPIView):
     serializer_class = CalendarEventSerializer
-    
     
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
@@ -51,9 +49,29 @@ class EventListCreate(generics.ListCreateAPIView):
         if event_type:
             queryset = queryset.filter(event_type=event_type)
         
+        # Status filtering
+        status = self.request.query_params.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        # Contact filtering
+        contact = self.request.query_params.get('contact')
+        if contact:
+            queryset = queryset.filter(customer_id=contact)
+            
+        # Opportunity filtering
+        opportunity = self.request.query_params.get('opportunity')
+        if opportunity:
+            queryset = queryset.filter(opportunity_id=opportunity)
+            
+        # User filtering
+        assigned_to = self.request.query_params.get('assigned_to')
+        if assigned_to:
+            queryset = queryset.filter(assigned_to_id=assigned_to)
+
         return queryset.select_related(
             'assigned_to', 'created_by', 'customer', 'opportunity'
-        )
+        ).order_by('-start_time')
     
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
@@ -100,7 +118,7 @@ class UpcomingEvents(generics.ListAPIView):
         if not user.is_staff:
             queryset = queryset.filter(assigned_to=user)
             
-        return queryset.order_by('start_time')[:10]
+        return queryset.order_by('start_time')
 
 class TodayEvents(generics.ListAPIView):
     serializer_class = CalendarEventSerializer
@@ -119,7 +137,6 @@ class TodayEvents(generics.ListAPIView):
             
         return queryset.order_by('start_time')
 
-# Keep your existing EventReminder views if needed
 class EventReminderListCreate(generics.ListCreateAPIView):
     serializer_class = EventReminderSerializer
     queryset = EventReminder.objects.all()
