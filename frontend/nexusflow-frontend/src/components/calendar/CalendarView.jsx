@@ -5,46 +5,42 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 
 const localizer = momentLocalizer(moment)
 
-const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, events }) => {
+const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, events = [] }) => {
   // Safe events handling - ensure events is always an array
   const safeEvents = React.useMemo(() => {
-    if (!events) {
-      console.warn('Events is null or undefined, using empty array')
+    if (!events || !Array.isArray(events)) {
+      console.warn('❌ Invalid events data, using empty array')
       return []
     }
-    
-    if (!Array.isArray(events)) {
-      console.warn('Events is not an array:', typeof events, events)
-      return []
-    }
-    
     return events
   }, [events])
 
   // Safe transformation of events to react-big-calendar format
   const calendarEvents = React.useMemo(() => {
-    return safeEvents.map(event => {
-      // Handle missing or invalid dates safely
-      let startDate, endDate
-      
-      try {
-        startDate = event.start_time ? new Date(event.start_time) : new Date()
-        endDate = event.end_time ? new Date(event.end_time) : new Date(startDate.getTime() + 60 * 60 * 1000) // Default 1 hour
-      } catch (error) {
-        console.warn('Invalid date in event:', event, error)
-        startDate = new Date()
-        endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
-      }
+    return safeEvents
+      .map((event) => {
+        try {
+          // Validate and parse dates
+          const startDate = event.start_time ? new Date(event.start_time) : new Date()
+          const endDate = event.end_time ? new Date(event.end_time) : new Date(startDate.getTime() + 60 * 60 * 1000)
+          
+          // Ensure end date is after start date
+          const validEndDate = endDate > startDate ? endDate : new Date(startDate.getTime() + 60 * 60 * 1000)
 
-      return {
-        id: event.id || Date.now().toString() + Math.random(), // Fallback ID
-        title: event.title || 'Untitled Event',
-        start: startDate,
-        end: endDate,
-        allDay: event.all_day || event.is_all_day || false, // Handle different field names
-        resource: event // Pass the original event data
-      }
-    })
+          return {
+            id: event.id || `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            title: event.title || 'Untitled Event',
+            start: startDate,
+            end: validEndDate,
+            allDay: event.all_day || false,
+            resource: event
+          }
+        } catch (error) {
+          console.warn('❌ Error processing event:', event, error)
+          return null
+        }
+      })
+      .filter(event => event !== null) // Remove invalid events
   }, [safeEvents])
 
   const handleSelectEvent = (event) => {
@@ -57,26 +53,74 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, eve
     if (onSlotClick) {
       onSlotClick({
         start: slotInfo.start,
-        end: slotInfo.end
+        end: slotInfo.end,
+        slots: slotInfo.slots,
+        action: slotInfo.action
       })
     }
   }
 
   const eventStyleGetter = (event) => {
     const backgroundColor = event.resource?.color || '#3788d8'
-    const style = {
-      backgroundColor,
-      borderRadius: '4px',
-      border: 'none',
-      color: 'white',
-      fontSize: '12px',
-      fontWeight: '500'
+    return {
+      style: {
+        backgroundColor,
+        borderRadius: '4px',
+        border: 'none',
+        color: 'white',
+        fontSize: '12px',
+        fontWeight: '500',
+        opacity: 0.9,
+        cursor: 'pointer'
+      }
     }
-    return { style }
+  }
+
+  const dayPropGetter = (date) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    const currentDate = new Date(date)
+    currentDate.setHours(0, 0, 0, 0)
+    
+    if (currentDate.getTime() === today.getTime()) {
+      return {
+        style: {
+          backgroundColor: 'rgba(59, 130, 246, 0.1)'
+        }
+      }
+    }
+    return {}
+  }
+
+  const slotPropGetter = (date) => {
+    const hours = date.getHours()
+    if (hours < 9 || hours > 17) {
+      return {
+        style: {
+          backgroundColor: 'rgba(0, 0, 0, 0.02)'
+        }
+      }
+    }
+    return {}
+  }
+
+  // Custom components for better styling
+  const components = {
+    event: ({ event }) => (
+      <div className="rbc-event-content">
+        <div className="font-medium truncate">{event.title}</div>
+        {!event.allDay && (
+          <div className="text-xs opacity-90">
+            {moment(event.start).format('HH:mm')} - {moment(event.end).format('HH:mm')}
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
-    <div className="h-full [&_.rbc-calendar]:font-inherit [&_.rbc-calendar]:text-sm">
+    <div className="h-full bg-white dark:bg-gray-900">
       <Calendar
         localizer={localizer}
         events={calendarEvents}
@@ -89,58 +133,151 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, eve
         selectable
         style={{ height: '100%' }}
         eventPropGetter={eventStyleGetter}
+        dayPropGetter={dayPropGetter}
+        slotPropGetter={slotPropGetter}
+        components={components}
         views={['month', 'week', 'day', 'agenda']}
         step={30}
         showMultiDayTimes
         popup
-        className="[&_.rbc-header]:px-1 [&_.rbc-header]:py-2 [&_.rbc-header]:font-semibold 
-                   [&_.rbc-header]:text-gray-900 [&_.rbc-header]:dark:text-gray-100 
-                   [&_.rbc-header]:border-b [&_.rbc-header]:border-gray-200 [&_.rbc-header]:dark:border-gray-700
-                   
-                   [&_.rbc-date-cell]:text-center [&_.rbc-date-cell]:p-1
-                   
-                   [&_.rbc-event]:p-1 [&_.rbc-event]:cursor-pointer
-                   [&_.rbc-event]:focus:outline-none
-                   
-                   [&_.rbc-today]:bg-blue-50 [&_.rbc-today]:dark:bg-blue-900/20
-                   
-                   [&_.rbc-off-range-bg]:bg-gray-50 [&_.rbc-off-range-bg]:dark:bg-gray-800
-                   
-                   [&_.rbc-off-range]:text-gray-400 [&_.rbc-off-range]:dark:text-gray-600
-                   
-                   [&_.rbc-button-link]:text-gray-900 [&_.rbc-button-link]:dark:text-gray-100
-                   [&_.rbc-button-link]:hover:text-blue-600 [&_.rbc-button-link]:dark:hover:text-blue-400
-                   
-                   [&_.rbc-toolbar]:px-4 [&_.rbc-toolbar]:py-3
-                   [&_.rbc-toolbar-label]:text-lg [&_.rbc-toolbar-label]:font-semibold
-                   [&_.rbc-toolbar-label]:text-gray-900 [&_.rbc-toolbar-label]:dark:text-gray-100
-                   
-                   [&_.rbc-btn]:text-gray-600 [&_.rbc-btn]:dark:text-gray-400
-                   [&_.rbc-btn]:hover:text-gray-900 [&_.rbc-btn]:dark:hover:text-gray-100
-                   [&_.rbc-btn]:hover:bg-gray-100 [&_.rbc-btn]:dark:hover:bg-gray-700
-                   
-                   [&_.rbc-active]:bg-blue-100 [&_.rbc-active]:dark:bg-blue-800
-                   [&_.rbc-active]:text-blue-800 [&_.rbc-active]:dark:text-blue-200
-                   
-                   [&_.rbc-show-more]:text-blue-600 [&_.rbc-show-more]:dark:text-blue-400
-                   [&_.rbc-show-more]:hover:text-blue-800 [&_.rbc-show-more]:dark:hover:text-blue-300
-                   
-                   [&_.rbc-time-view]:border-gray-200 [&_.rbc-time-view]:dark:border-gray-700
-                   
-                   [&_.rbc-time-header]:border-gray-200 [&_.rbc-time-header]:dark:border-gray-700
-                   
-                   [&_.rbc-time-content]:border-gray-200 [&_.rbc-time-content]:dark:border-gray-700
-                   
-                   [&_.rbc-timeslot-group]:border-gray-200 [&_.rbc-timeslot-group]:dark:border-gray-700
-                   
-                   [&_.rbc-day-slot_.rbc-time-slot]:border-gray-100 [&_.rbc-day-slot_.rbc-time-slot]:dark:border-gray-800
-                   
-                   [&_.rbc-agenda-view_table]:border-gray-200 [&_.rbc-agenda-view_table]:dark:border-gray-700
-                   
-                   [&_.rbc-agenda-date-cell]:text-gray-600 [&_.rbc-agenda-date-cell]:dark:text-gray-400
-                   
-                   [&_.rbc-agenda-time-cell]:text-gray-600 [&_.rbc-agenda-time-cell]:dark:text-gray-400"
+        scrollToTime={new Date(1970, 1, 1, 8)} // Start at 8 AM
+        min={new Date(1970, 1, 1, 8, 0, 0)} // 8 AM
+        max={new Date(1970, 1, 1, 20, 0, 0)} // 8 PM
+        className="rbc-custom-calendar"
       />
+
+      <style jsx>{`
+        .rbc-custom-calendar {
+          font-family: inherit;
+          font-size: 0.875rem;
+        }
+
+        .rbc-custom-calendar .rbc-header {
+          padding: 0.5rem 0.25rem;
+          font-weight: 600;
+          color: #111827;
+          border-bottom: 1px solid #e5e7eb;
+        }
+
+        .rbc-custom-calendar .rbc-date-cell {
+          text-align: center;
+          padding: 0.25rem;
+        }
+
+        .rbc-custom-calendar .rbc-event {
+          padding: 0.25rem;
+          cursor: pointer;
+          border: none;
+        }
+
+        .rbc-custom-calendar .rbc-event:focus {
+          outline: none;
+        }
+
+        .rbc-custom-calendar .rbc-today {
+          background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .rbc-custom-calendar .rbc-off-range-bg {
+          background-color: #f9fafb;
+        }
+
+        .rbc-custom-calendar .rbc-off-range {
+          color: #9ca3af;
+        }
+
+        .rbc-custom-calendar .rbc-button-link {
+          color: #111827;
+        }
+
+        .rbc-custom-calendar .rbc-button-link:hover {
+          color: #2563eb;
+        }
+
+        .rbc-custom-calendar .rbc-toolbar {
+          padding: 1rem;
+        }
+
+        .rbc-custom-calendar .rbc-toolbar-label {
+          font-size: 1.125rem;
+          font-weight: 600;
+          color: #111827;
+        }
+
+        .rbc-custom-calendar .rbc-btn {
+          color: #4b5563;
+        }
+
+        .rbc-custom-calendar .rbc-btn:hover {
+          color: #111827;
+          background-color: #f3f4f6;
+        }
+
+        .rbc-custom-calendar .rbc-active {
+          background-color: #dbeafe;
+          color: #1e40af;
+        }
+
+        .rbc-custom-calendar .rbc-show-more {
+          color: #2563eb;
+        }
+
+        .rbc-custom-calendar .rbc-show-more:hover {
+          color: #1d4ed8;
+        }
+
+        /* Dark mode styles */
+        .dark .rbc-custom-calendar .rbc-header {
+          color: #f9fafb;
+          border-bottom-color: #374151;
+        }
+
+        .dark .rbc-custom-calendar .rbc-today {
+          background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .dark .rbc-custom-calendar .rbc-off-range-bg {
+          background-color: #1f2937;
+        }
+
+        .dark .rbc-custom-calendar .rbc-off-range {
+          color: #6b7280;
+        }
+
+        .dark .rbc-custom-calendar .rbc-button-link {
+          color: #f9fafb;
+        }
+
+        .dark .rbc-custom-calendar .rbc-button-link:hover {
+          color: #60a5fa;
+        }
+
+        .dark .rbc-custom-calendar .rbc-toolbar-label {
+          color: #f9fafb;
+        }
+
+        .dark .rbc-custom-calendar .rbc-btn {
+          color: #9ca3af;
+        }
+
+        .dark .rbc-custom-calendar .rbc-btn:hover {
+          color: #f9fafb;
+          background-color: #374151;
+        }
+
+        .dark .rbc-custom-calendar .rbc-active {
+          background-color: #1e3a8a;
+          color: #dbeafe;
+        }
+
+        .dark .rbc-custom-calendar .rbc-show-more {
+          color: #60a5fa;
+        }
+
+        .dark .rbc-custom-calendar .rbc-show-more:hover {
+          color: #93c5fd;
+        }
+      `}</style>
     </div>
   )
 }

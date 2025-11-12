@@ -4,7 +4,9 @@ import axios from 'axios'
 // 🔧 BASE CONFIGURATION
 // ==============================
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ||   'http://41.74.81.68:8000/api'
+
+// 'http://localhost:8000/api'
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -210,30 +212,144 @@ export const analyticsAPI = {
 }
 
 // ==============================
-// 📅 CALENDAR API
+// 📅 CALENDAR API - UPDATED
 // ==============================
 
 export const calendarAPI = {
-  // Events CRUD - Updated to match your new backend structure
-  getAll: (params = {}) => get('/calendar/events/', params),
-  getById: (id) => get(`/calendar/events/${id}/`),
+  // =====================
+  // EVENTS CRUD
+  // =====================
+  
+  // Main CRUD operations
+  
+  getAll: (params = {}) => get('/calendar/events/', { ...params, _t: Date.now() }),
+  getById: (id) => get(`/calendar/events/${id}/`, { _t: Date.now() }),
   create: (data) => post('/calendar/events/', data),
   update: (id, data) => put(`/calendar/events/${id}/`, data),
   delete: (id) => del(`/calendar/events/${id}/`),
+  // =====================
+  // EVENT FILTERING & QUERIES
+  // =====================
   
-  // Specific calendar endpoints
-  getUpcoming: () => get('/calendar/events/upcoming/'),
+  // Date-based queries
+  getUpcoming: (params = {}) => get('/calendar/events/upcoming/', params),
   getToday: () => get('/calendar/events/today/'),
+  getByDateRange: (startDate, endDate) => 
+    get('/calendar/events/', { start_date: startDate, end_date: endDate }),
+  getByMonth: (year, month) => 
+    get('/calendar/events/', { year, month }),
   
-  // For backward compatibility with existing frontend components
+  // Status-based queries
+  getByStatus: (status) => get('/calendar/events/', { status }),
+  getCompleted: () => get('/calendar/events/', { status: 'completed' }),
+  getPending: () => get('/calendar/events/', { status: 'scheduled' }),
+  
+  // =====================
+  // EVENT MANAGEMENT
+  // =====================
+  
+  // Event status management
+  changeEventStatus: (id, status) => patch(`/calendar/events/${id}/`, { status }),
+  completeEvent: (id) => patch(`/calendar/events/${id}/`, { status: 'completed' }),
+  cancelEvent: (id) => patch(`/calendar/events/${id}/`, { status: 'cancelled' }),
+  
+  // Event type management
+  getByEventType: (eventType) => get('/calendar/events/', { event_type: eventType }),
+  
+  // =====================
+  // EVENT RELATIONSHIPS
+  // =====================
+  
+  // Contact-related events
+  getEventsByContact: (contactId) => get('/calendar/events/', { contact: contactId }),
+  
+  // Opportunity-related events
+  getEventsByOpportunity: (opportunityId) => get('/calendar/events/', { opportunity: opportunityId }),
+  
+  // User-related events
+  getMyEvents: (params = {}) => get('/calendar/events/my_events/', params),
+  getEventsByUser: (userId) => get('/calendar/events/', { assigned_to: userId }),
+  
+  // =====================
+  // EVENT ANALYTICS
+  // =====================
+  
+  getEventStats: () => get('/calendar/events/stats/'),
+  getBusyDays: (params = {}) => get('/calendar/events/busy_days/', params),
+  getEventTypeDistribution: () => get('/calendar/events/event_type_distribution/'),
+  
+  // =====================
+  // BACKWARD COMPATIBILITY
+  // =====================
+  
+  // Legacy endpoints for existing components
   getEvents: (params = {}) => get('/calendar/events/', params),
   createEvent: (data) => post('/calendar/events/', data),
   updateEvent: (id, data) => put(`/calendar/events/${id}/`, data),
   deleteEvent: (id) => del(`/calendar/events/${id}/`),
-  getUpcomingEvents: () => get('/calendar/events/upcoming/'),
+  getUpcomingEvents: (params = {}) => get('/calendar/events/upcoming/', params),
+}
+
+// ==============================
+// 📈 DASHBOARD API - NEW
+// ==============================
+
+export const dashboardAPI = {
+  // Comprehensive dashboard data
+  getOverview: () => get('/dashboard/overview/'),
+  getQuickStats: () => get('/dashboard/quick_stats/'),
   
-  // Event status management
-  changeEventStatus: (id, status) => patch(`/calendar/events/${id}/`, { status }),
+  // Performance metrics
+  getPerformanceMetrics: () => get('/dashboard/performance_metrics/'),
+  getSalesMetrics: () => get('/dashboard/sales_metrics/'),
+  
+  // Activity feeds
+  getRecentActivity: () => get('/dashboard/recent_activity/'),
+  getUpcomingEvents: () => get('/dashboard/upcoming_events/'),
+  
+  // Team performance
+  getTeamPerformance: () => get('/dashboard/team_performance/'),
+  getIndividualStats: (userId) => get(`/dashboard/individual_stats/${userId}/`),
+}
+
+// ==============================
+// 📊 REPORTING API - NEW
+// ==============================
+
+export const reportsAPI = {
+  // Sales reports
+  getSalesReport: (params = {}) => get('/reports/sales/', params),
+  getPipelineReport: (params = {}) => get('/reports/pipeline/', params),
+  
+  // Activity reports
+  getActivityReport: (params = {}) => get('/reports/activity/', params),
+  getTaskReport: (params = {}) => get('/reports/tasks/', params),
+  
+  // Performance reports
+  getPerformanceReport: (params = {}) => get('/reports/performance/', params),
+  getConversionReport: (params = {}) => get('/reports/conversion/', params),
+  
+  // Export functionality
+  exportReport: (reportType, format = 'pdf', params = {}) => 
+    get(`/reports/export/${reportType}/`, { ...params, format }),
+}
+
+// ==============================
+// 🔧 SETTINGS API - NEW
+// ==============================
+
+export const settingsAPI = {
+  // User preferences
+  getPreferences: () => get('/settings/preferences/'),
+  updatePreferences: (data) => put('/settings/preferences/', data),
+  
+  // System settings (admin only)
+  getSystemSettings: () => get('/settings/system/'),
+  updateSystemSettings: (data) => put('/settings/system/', data),
+  
+  // Notification settings
+  getNotificationSettings: () => get('/settings/notifications/'),
+  updateNotificationSettings: (data) => put('/settings/notifications/', data),
 }
 
 // ==============================

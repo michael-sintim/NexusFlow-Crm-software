@@ -93,10 +93,9 @@ const TasksPage = () => {
           
           <Button
             onClick={() => navigate('/tasks/new')}
-            className="w-full lg:w-auto cursor-pointer px-8 py-3 bg-gradient-to-r from-primary-500 to-purple-600 hover:from-primary-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
-            size="lg"
+            className="w-full lg:w-auto cursor-pointer px-8 bg-blue-500 py-3 hover:bg-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
           >
-            <Plus className="h-5 w-5 mr-2" />
+            <Plus className="h-5 w-5 mr-2 " />
             Add New Task
           </Button>
         </div>

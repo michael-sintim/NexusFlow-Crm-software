@@ -27,7 +27,7 @@ const Sidebar = () => {
     <div className="fixed inset-y-0 py-2 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Logo */}
       <div className="flex items-center space-x-3 p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
+        <div className="w-8 h-8  bg-purple-700 rounded-lg flex items-center justify-center">
           <span className="text-white font-bold text-sm">NF</span>
         </div>
         <span className="text-xl font-bold text-gray-900 dark:text-white">

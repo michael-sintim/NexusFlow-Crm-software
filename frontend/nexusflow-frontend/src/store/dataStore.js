@@ -4,6 +4,7 @@ import {
   opportunitiesAPI,
   tasksAPI,
   analyticsAPI,
+  calendarAPI,
 } from '../services/api';
 
 export const useDataStore = create((set, get) => ({
@@ -133,7 +134,7 @@ export const useDataStore = create((set, get) => ({
   clearContactsError: () => set({ contactsError: null }),
 
   /* =====================
-   * OPPORTUNITIES - FIXED
+   * OPPORTUNITIES
    * ===================== */
   opportunities: [],
   opportunitiesLoading: false,
@@ -375,10 +376,124 @@ export const useDataStore = create((set, get) => ({
   clearTasksError: () => set({ tasksError: null }),
 
   /* =====================
-   * ANALYTICS - FIXED
+   * CALENDAR EVENTS
+   * ===================== */
+  calendarEvents: [],
+  currentCalendarEvent: null,
+  calendarEventsLoading: false,
+  calendarEventsError: null,
+
+  fetchCalendarEvents: async (params = {}) => {
+    set({ calendarEventsLoading: true, calendarEventsError: null });
+    try {
+      const response = await calendarAPI.getAll(params);
+      const eventsData = response.data.results || response.data;
+      
+      set({ calendarEvents: eventsData, calendarEventsLoading: false });
+      return eventsData;
+    } catch (error) {
+      set({
+        calendarEventsError: error.response?.data || 'Failed to fetch calendar events',
+        calendarEventsLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  fetchCalendarEvent: async (id) => {
+    set({ calendarEventsLoading: true, calendarEventsError: null });
+    try {
+      const response = await calendarAPI.getById(id);
+      set({ currentCalendarEvent: response.data, calendarEventsLoading: false });
+      return response.data;
+    } catch (error) {
+      set({
+        calendarEventsError: error.response?.data || 'Failed to fetch calendar event',
+        calendarEventsLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  createCalendarEvent: async (data) => {
+    set({ calendarEventsLoading: true, calendarEventsError: null });
+    try {
+      const response = await calendarAPI.create(data);
+      set(state => ({ 
+        calendarEvents: [response.data, ...state.calendarEvents],
+        calendarEventsLoading: false 
+      }));
+      return response.data;
+    } catch (error) {
+      set({
+        calendarEventsError: error.response?.data || 'Failed to create calendar event',
+        calendarEventsLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  updateCalendarEvent: async (id, data) => {
+    set({ calendarEventsLoading: true, calendarEventsError: null });
+    try {
+      const response = await calendarAPI.update(id, data);
+      set(state => ({
+        calendarEvents: state.calendarEvents.map(event => 
+          event.id === id ? response.data : event
+        ),
+        currentCalendarEvent: state.currentCalendarEvent?.id === id 
+          ? response.data 
+          : state.currentCalendarEvent,
+        calendarEventsLoading: false
+      }));
+      return response.data;
+    } catch (error) {
+      set({
+        calendarEventsError: error.response?.data || 'Failed to update calendar event',
+        calendarEventsLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  deleteCalendarEvent: async (id) => {
+    set({ calendarEventsLoading: true, calendarEventsError: null });
+    try {
+      await calendarAPI.delete(id);
+      set(state => ({
+        calendarEvents: state.calendarEvents.filter(event => event.id !== id),
+        currentCalendarEvent: state.currentCalendarEvent?.id === id ? null : state.currentCalendarEvent,
+        calendarEventsLoading: false
+      }));
+    } catch (error) {
+      set({
+        calendarEventsError: error.response?.data || 'Failed to delete calendar event',
+        calendarEventsLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  getCalendarEvent: async (id) => {
+    return get().fetchCalendarEvent(id);
+  },
+
+  selectCalendarEvent: (eventId) => {
+    const event = get().calendarEvents.find(e => e.id === eventId);
+    set({ currentCalendarEvent: event });
+    return event;
+  },
+
+  setCurrentCalendarEvent: (event) => set({ currentCalendarEvent: event }),
+
+  clearCurrentCalendarEvent: () => set({ currentCalendarEvent: null }),
+  clearCalendarEventsError: () => set({ calendarEventsError: null }),
+
+  /* =====================
+   * ANALYTICS
    * ===================== */
   dashboardData: null,
-  pipelineData: [], // ✅ FIXED: Changed from null to []
+  pipelineData: [],
   analyticsLoading: false,
   analyticsError: null,
 
@@ -401,7 +516,6 @@ export const useDataStore = create((set, get) => ({
     set({ analyticsLoading: true, analyticsError: null });
     try {
       const response = await analyticsAPI.getPipeline();
-      // ✅ FIXED: Ensure we always set an array
       const pipelineData = Array.isArray(response.data) ? response.data : [];
       set({ pipelineData, analyticsLoading: false });
       return pipelineData;
@@ -409,7 +523,7 @@ export const useDataStore = create((set, get) => ({
       set({
         analyticsError: error.response?.data || 'Failed to fetch pipeline data',
         analyticsLoading: false,
-        pipelineData: [] // ✅ FIXED: Set empty array on error
+        pipelineData: []
       });
       throw error;
     }
@@ -422,6 +536,7 @@ export const useDataStore = create((set, get) => ({
     contactsError: null, 
     opportunitiesError: null, 
     tasksError: null, 
+    calendarEventsError: null,
     analyticsError: null 
   }),
 
@@ -429,9 +544,11 @@ export const useDataStore = create((set, get) => ({
     contacts: [],
     opportunities: [],
     tasks: [],
+    calendarEvents: [],
     dashboardData: null,
-    pipelineData: [], // ✅ FIXED: Changed from null to []
+    pipelineData: [],
     currentContact: null,
-    currentTask: null
+    currentTask: null,
+    currentCalendarEvent: null
   })
 }));

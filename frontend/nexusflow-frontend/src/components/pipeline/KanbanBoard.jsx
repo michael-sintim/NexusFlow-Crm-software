@@ -4,10 +4,11 @@ import { useDataStore } from '../../store/dataStore'
 import { contactsAPI } from '../../services/api'
 import { MoreHorizontal, User, Building, DollarSign, Edit, Trash2, Eye, ArrowLeft, X, FileText, Calendar, Target } from 'lucide-react'
 
+
 // Match these with your Django backend STAGE_CHOICES
 const DEAL_STAGES = [
-  { id: 'prospect', name: 'Prospect', color: 'bg-blue-500', textColor: 'text-blue-700' },
-  { id: 'qualified', name: 'Qualified', color: 'bg-purple-500', textColor: 'text-purple-700' },
+  { id: 'prospect', name: 'New Lead', color: 'bg-blue-500', textColor: 'text-blue-700' },
+  { id: 'qualified', name: 'Client Needs', color: 'bg-purple-500', textColor: 'text-purple-700' },
   { id: 'proposal', name: 'Proposal', color: 'bg-yellow-500', textColor: 'text-yellow-700' },
   { id: 'negotiation', name: 'Negotiation', color: 'bg-orange-500', textColor: 'text-orange-700' },
   { id: 'closed_won', name: 'Closed Won', color: 'bg-green-500', textColor: 'text-green-700' },

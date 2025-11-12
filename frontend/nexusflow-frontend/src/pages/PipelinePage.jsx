@@ -227,9 +227,9 @@ const PipelinePage = () => {
             <div className="flex items-center gap-3 mt-4 lg:mt-0">
               <Button
                 onClick={handleCreateOpportunity}
-                className="shadow-lg shadow-blue-500/25"
+                className="shadow-lg shadow-blue-500/25 bg-blue-500"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-2 bg-blue-500" />
                 Add Opportunity
               </Button>
             </div>

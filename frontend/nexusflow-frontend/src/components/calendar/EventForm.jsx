@@ -6,7 +6,9 @@ import {
   Users, 
   Palette,
   Tag,
-  MapPin
+  MapPin,
+  Phone,
+  CheckCircle
 } from 'lucide-react'
 
 const EventForm = ({ event, onSave, onCancel }) => {
@@ -16,7 +18,7 @@ const EventForm = ({ event, onSave, onCancel }) => {
     start_time: '',
     end_time: '',
     all_day: false,
-    color: '#3788d8',
+    color: '#3b82f6',
     location: '',
     event_type: 'meeting',
     reminder: '15'
@@ -43,6 +45,18 @@ const EventForm = ({ event, onSave, onCancel }) => {
     { value: '1440', label: '1 day before' }
   ]
 
+  // Color options optimized for dark mode
+  const colors = [
+    { value: '#3b82f6', name: 'Blue' },
+    { value: '#10b981', name: 'Green' },
+    { value: '#f59e0b', name: 'Amber' },
+    { value: '#ef4444', name: 'Red' },
+    { value: '#8b5cf6', name: 'Purple' },
+    { value: '#06b6d4', name: 'Cyan' },
+    { value: '#f97316', name: 'Orange' },
+    { value: '#84cc16', name: 'Lime' }
+  ]
+
   useEffect(() => {
     if (event) {
       setFormData({
@@ -51,7 +65,7 @@ const EventForm = ({ event, onSave, onCancel }) => {
         start_time: event.start_time ? formatDateTimeLocal(event.start_time) : '',
         end_time: event.end_time ? formatDateTimeLocal(event.end_time) : '',
         all_day: event.all_day || false,
-        color: event.color || '#3788d8',
+        color: event.color || '#3b82f6',
         location: event.location || '',
         event_type: event.event_type || 'meeting',
         reminder: event.reminder || '15'
@@ -98,48 +112,39 @@ const EventForm = ({ event, onSave, onCancel }) => {
     }))
   }
 
-  const colors = [
-    { value: '#3788d8', name: 'Blue' },
-    { value: '#10b981', name: 'Green' },
-    { value: '#f59e0b', name: 'Amber' },
-    { value: '#ef4444', name: 'Red' },
-    { value: '#8b5cf6', name: 'Purple' },
-    { value: '#06b6d4', name: 'Cyan' },
-    { value: '#f97316', name: 'Orange' },
-    { value: '#84cc16', name: 'Lime' }
-  ]
-
   const getEventTypeIcon = (type) => {
     const eventType = eventTypes.find(et => et.value === type)
     return eventType ? eventType.icon : Users
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-10 flex items-center justify-center p-4 z-50">
+      <div className="bg-gray-800 rounded-xl shadow-2xl border border-gray-700 w-full max-w-2xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b bg-gradient-to-r from-gray-50 to-white">
+        <div className="flex justify-between items-center p-6 border-b border-gray-700 bg-gradient-to-r from-gray-800 to-gray-900">
           <div className="flex items-center space-x-3">
             <div 
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-white"
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-white shadow-lg"
               style={{ backgroundColor: formData.color }}
             >
-              {React.createElement(getEventTypeIcon(formData.event_type), { className: "h-5 w-5" })}
+              {React.createElement(getEventTypeIcon(formData.event_type), { 
+                className: "h-5 w-5" 
+              })}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-white">
                 {event ? 'Edit Event' : 'Create New Event'}
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-300">
                 {event ? 'Update your event details' : 'Schedule a new event'}
               </p>
             </div>
           </div>
           <button
             onClick={onCancel}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-gray-400 hover:text-white"
           >
-            <X className="h-5 w-5 text-gray-500" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -151,8 +156,8 @@ const EventForm = ({ event, onSave, onCancel }) => {
             <div className="space-y-6">
               {/* Title */}
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center">
-                  <Tag className="h-4 w-4 mr-2 text-gray-500" />
+                <label className="block text-sm font-semibold text-white mb-2 flex items-center">
+                  <Tag className="h-4 w-4 mr-2 text-gray-400" />
                   Event Title *
                 </label>
                 <input
@@ -161,14 +166,14 @@ const EventForm = ({ event, onSave, onCancel }) => {
                   value={formData.title}
                   onChange={handleChange}
                   required
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 transition-colors"
                   placeholder="Enter event title..."
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Description
                 </label>
                 <textarea
@@ -176,15 +181,15 @@ const EventForm = ({ event, onSave, onCancel }) => {
                   value={formData.description}
                   onChange={handleChange}
                   rows={4}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors"
+                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-white placeholder-gray-400 transition-colors"
                   placeholder="Add event description, agenda, or notes..."
                 />
               </div>
 
               {/* Location */}
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center">
-                  <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+                <label className="block text-sm font-semibold text-white mb-2 flex items-center">
+                  <MapPin className="h-4 w-4 mr-2 text-gray-400" />
                   Location
                 </label>
                 <input
@@ -192,7 +197,7 @@ const EventForm = ({ event, onSave, onCancel }) => {
                   name="location"
                   value={formData.location}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 transition-colors"
                   placeholder="Add location or meeting link..."
                 />
               </div>
@@ -201,15 +206,15 @@ const EventForm = ({ event, onSave, onCancel }) => {
             {/* Right Column */}
             <div className="space-y-6">
               {/* Date & Time */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-                  <Clock className="h-4 w-4 mr-2 text-gray-500" />
+              <div className="bg-gray-750 rounded-lg p-4 border border-gray-700">
+                <h3 className="text-sm font-semibold text-white mb-3 flex items-center">
+                  <Clock className="h-4 w-4 mr-2 text-gray-400" />
                   Date & Time
                 </h3>
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-300 mb-1">
                         Start *
                       </label>
                       <input
@@ -218,11 +223,11 @@ const EventForm = ({ event, onSave, onCancel }) => {
                         value={formData.start_time}
                         onChange={handleChange}
                         required
-                        className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                      <label className="block text-xs font-medium text-gray-300 mb-1">
                         End *
                       </label>
                       <input
@@ -231,7 +236,7 @@ const EventForm = ({ event, onSave, onCancel }) => {
                         value={formData.end_time}
                         onChange={handleChange}
                         required
-                        className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-white"
                       />
                     </div>
                   </div>
@@ -241,27 +246,27 @@ const EventForm = ({ event, onSave, onCancel }) => {
                       name="all_day"
                       checked={formData.all_day}
                       onChange={handleChange}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-600 bg-gray-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-800"
                     />
-                    <span className="text-sm text-gray-700">All day event</span>
+                    <span className="text-sm text-gray-300">All day event</span>
                   </label>
                 </div>
               </div>
 
               {/* Event Type */}
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center">
-                  <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                <label className="block text-sm font-semibold text-white mb-2 flex items-center">
+                  <Calendar className="h-4 w-4 mr-2 text-gray-400" />
                   Event Type
                 </label>
                 <select
                   name="event_type"
                   value={formData.event_type}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
                 >
                   {eventTypes.map(type => (
-                    <option key={type.value} value={type.value}>
+                    <option key={type.value} value={type.value} className="bg-gray-700">
                       {type.label}
                     </option>
                   ))}
@@ -270,17 +275,17 @@ const EventForm = ({ event, onSave, onCancel }) => {
 
               {/* Reminder */}
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                <label className="block text-sm font-semibold text-white mb-2">
                   Set Reminder
                 </label>
                 <select
                   name="reminder"
                   value={formData.reminder}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
                 >
                   {reminderOptions.map(option => (
-                    <option key={option.value} value={option.value}>
+                    <option key={option.value} value={option.value} className="bg-gray-700">
                       {option.label}
                     </option>
                   ))}
@@ -289,8 +294,8 @@ const EventForm = ({ event, onSave, onCancel }) => {
 
               {/* Color Selection */}
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center">
-                  <Palette className="h-4 w-4 mr-2 text-gray-500" />
+                <label className="block text-sm font-semibold text-white mb-2 flex items-center">
+                  <Palette className="h-4 w-4 mr-2 text-gray-400" />
                   Event Color
                 </label>
                 <div className="grid grid-cols-4 gap-2">
@@ -299,15 +304,15 @@ const EventForm = ({ event, onSave, onCancel }) => {
                       key={color.value}
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, color: color.value }))}
-                      className={`p-2 rounded-lg border-2 transition-all ${
+                      className={`p-2 rounded-lg border-2 transition-all transform hover:scale-105 ${
                         formData.color === color.value 
-                          ? 'border-gray-800 scale-105' 
-                          : 'border-gray-200 hover:border-gray-400'
+                          ? 'border-white shadow-lg scale-105' 
+                          : 'border-gray-600 hover:border-gray-400'
                       }`}
                       title={color.name}
                     >
                       <div
-                        className="w-full h-8 rounded"
+                        className="w-full h-8 rounded shadow-md"
                         style={{ backgroundColor: color.value }}
                       />
                     </button>
@@ -318,18 +323,18 @@ const EventForm = ({ event, onSave, onCancel }) => {
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-end space-x-3 pt-6 border-t">
+          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-700">
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-6 py-3 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 hover:text-white transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+              className="px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 shadow-lg shadow-blue-600/25"
             >
               {loading ? (
                 <>
@@ -346,18 +351,5 @@ const EventForm = ({ event, onSave, onCancel }) => {
     </div>
   )
 }
-
-// Add missing icons
-const Phone = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-  </svg>
-)
-
-const CheckCircle = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-)
 
 export default EventForm

@@ -77,7 +77,7 @@ const Header = () => {
             {/* User Menu */}
             <div className="flex items-center space-x-3 border-l border-gray-200 dark:border-gray-700 pl-4">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                <div className="w-8 h-8  bg-purple-700 rounded-full flex items-center justify-center text-white font-medium text-sm">
                   {getUserInitials()}
                 </div>
                 <div className="hidden md:block text-left">
