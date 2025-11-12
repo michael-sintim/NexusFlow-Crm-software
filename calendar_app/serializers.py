@@ -4,6 +4,8 @@ from .models import CalendarEvent, EventReminder
 from contacts.serializers import ContactListSerializer
 from opportunities.serializers import OpportunityListSerializer
 from django.contrib.auth import get_user_model
+# calendar_app/views.py
+
 
 User = get_user_model()
 

@@ -6,10 +6,22 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import CalendarEvent, EventReminder
 from .serializers import CalendarEventSerializer, EventReminderSerializer
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 
+@method_decorator(never_cache, name='dispatch')
 class EventListCreate(generics.ListCreateAPIView):
     serializer_class = CalendarEventSerializer
     
+    
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        # Add no-cache headers
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        return response
+
     def get_queryset(self):
         queryset = CalendarEvent.objects.all()
         
