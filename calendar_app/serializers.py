@@ -24,7 +24,7 @@ class CalendarEventSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 'event_type', 'start_time', 'end_time',
             'all_day', 'customer', 'customer_details', 'opportunity', 'opportunity_details',
             'created_by', 'created_by_details', 'status', 'reminder_minutes', 
-            'is_recurring', 'recurrence_rule', 'recurrence_end', 'color', 
+            'is_recurring', 'recurrence_rule', 'recurrence_end', 'color',  'location',
             'duration', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_by', 'created_at', 'updated_at']

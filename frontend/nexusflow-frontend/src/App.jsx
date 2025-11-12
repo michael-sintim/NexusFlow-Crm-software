@@ -83,8 +83,11 @@ function App() {
               <OpportunityForm />
             </ProtectedRoute>
           } />
-          {/* REMOVED: ContactForm route - now handled as modal */}
-
+          <Route path="/contacts/new" element={
+            <ProtectedRoute>
+              <ContactForm />
+            </ProtectedRoute>
+          } />
           {/* ADD CALENDAR EVENT DETAIL ROUTE */}
           <Route path="/calendar/event/:id" element={
             <ProtectedRoute>

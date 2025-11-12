@@ -31,6 +31,7 @@ class CalendarEvent(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     all_day = models.BooleanField(default=False)
+    location = models.CharField(max_length=500, blank=True) 
     
     # Relationships
     customer = models.ForeignKey(Contact, on_delete=models.SET_NULL, null=True, blank=True, related_name='calendar_events')

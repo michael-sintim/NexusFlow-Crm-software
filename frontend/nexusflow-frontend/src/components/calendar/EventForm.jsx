@@ -21,7 +21,7 @@ const EventForm = ({ event, onSave, onCancel }) => {
     color: '#3b82f6',
     location: '',
     event_type: 'meeting',
-    reminder: '15'
+    reminder_minutes: '15'
   })
 
   const [loading, setLoading] = useState(false)
@@ -68,7 +68,7 @@ const EventForm = ({ event, onSave, onCancel }) => {
         color: event.color || '#3b82f6',
         location: event.location || '',
         event_type: event.event_type || 'meeting',
-        reminder: event.reminder || '15'
+        reminder_minutes: event.reminder_minutes || '15'
       })
     } else {
       // Set default times for new event
@@ -279,8 +279,8 @@ const EventForm = ({ event, onSave, onCancel }) => {
                   Set Reminder
                 </label>
                 <select
-                  name="reminder"
-                  value={formData.reminder}
+                  name="reminder_minutes"
+                  value={formData.reminder_minutes}
                   onChange={handleChange}
                   className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
                 >

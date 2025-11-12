@@ -2,9 +2,9 @@ import React from 'react'
 import { Plus, Search, Filter, X, Calendar, ChevronDown } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
 import ContactList from '../components/contacts/ContactList'
-import ContactForm from '../components/contacts/ContactForm' // Import ContactForm
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
+import { useNavigate } from 'react-router-dom'
 
 const ContactsPage = () => {
   const { contacts, fetchContacts, isLoading, error } = useDataStore()
@@ -16,10 +16,7 @@ const ContactsPage = () => {
     dateRange: { from: '', to: '' }
   })
   const [filterError, setFilterError] = React.useState('')
-  
-  // ADD MODAL STATE
-  const [showContactForm, setShowContactForm] = React.useState(false)
-  const [selectedContact, setSelectedContact] = React.useState(null)
+  const navigate = useNavigate()
 
   React.useEffect(() => {
     fetchContacts()
@@ -30,40 +27,6 @@ const ContactsPage = () => {
     console.log('ContactsPage: Refreshing contacts after update')
     await fetchContacts()
   }, [fetchContacts])
-
-  // ADD HANDLERS FOR CONTACT FORM MODAL
-  const handleCreateContact = () => {
-    setSelectedContact(null)
-    setShowContactForm(true)
-  }
-
-  const handleEditContact = (contact) => {
-    setSelectedContact(contact)
-    setShowContactForm(true)
-  }
-
-  const handleSaveContact = async (contactData) => {
-    try {
-      if (selectedContact) {
-        // Update existing contact
-        await contactsAPI.update(selectedContact.id, contactData)
-      } else {
-        // Create new contact
-        await contactsAPI.create(contactData)
-      }
-      setShowContactForm(false)
-      setSelectedContact(null)
-      // Refresh contacts list
-      fetchContacts()
-    } catch (error) {
-      console.error('Error saving contact:', error)
-    }
-  }
-
-  const handleCloseForm = () => {
-    setShowContactForm(false)
-    setSelectedContact(null)
-  }
 
   // Safely handle contacts data - ensure it's always an array
   const contactsArray = React.useMemo(() => {
@@ -338,9 +301,8 @@ const ContactsPage = () => {
             </p>
           </div>
           
-          {/* UPDATE THIS BUTTON TO USE MODAL INSTEAD OF NAVIGATION */}
           <Button
-            onClick={handleCreateContact}
+            onClick={() => navigate('/contacts/new')}
             className="mt-4 sm:mt-0  bg-blue-500  "
           >
             <Plus className="h-4 w-4 mr-2 " />
@@ -561,16 +523,6 @@ const ContactsPage = () => {
         <ContactList 
           contacts={filteredContacts} 
           onContactUpdate={handleContactUpdate}
-          onEditContact={handleEditContact} // Pass edit handler to ContactList
-        />
-      )}
-
-      {/* ADD CONTACT FORM MODAL */}
-      {showContactForm && (
-        <ContactForm
-          initialData={selectedContact}
-          onSave={handleSaveContact}
-          onCancel={handleCloseForm}
         />
       )}
     </div>
