@@ -7,6 +7,7 @@ const RevenueChart = () => {
   const { dashboardData } = useDataStore()
   const [revenueData, setRevenueData] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [timeRange, setTimeRange] = useState('6months')
 
   useEffect(() => {
@@ -16,9 +17,13 @@ const RevenueChart = () => {
   const fetchRevenueTrends = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/analytics/revenue_trends/')
+      setError(null)
       
-      if (response.data && response.data.length > 0) {
+      // Use the analyticsAPI from your store or direct API call
+      const response = await api.get('/analytics/revenue_trends/')
+      console.log('Revenue trends API response:', response.data)
+      
+      if (response.data && Array.isArray(response.data)) {
         // Transform the API data to match our chart format
         const transformedData = response.data.map(item => ({
           period: formatPeriod(item.period),
@@ -26,15 +31,17 @@ const RevenueChart = () => {
           target: item.target || calculateTarget(item.revenue),
           growth: item.growth || 0,
           rawPeriod: item.period
-        })).reverse() // Show oldest to newest
+        }))
         
+        console.log('Transformed revenue data:', transformedData)
         setRevenueData(transformedData)
       } else {
-        // Fallback to using dashboard data if no specific revenue trends
+        console.warn('No revenue data found in response')
         generateDataFromDashboard()
       }
     } catch (error) {
       console.error('Error fetching revenue trends:', error)
+      setError('Failed to load revenue data')
       generateDataFromDashboard()
     } finally {
       setLoading(false)
@@ -42,24 +49,38 @@ const RevenueChart = () => {
   }
 
   const generateDataFromDashboard = () => {
-    if (!dashboardData) return
+    if (!dashboardData) {
+      console.log('No dashboard data available for fallback')
+      setRevenueData([])
+      return
+    }
     
-    const currentRevenue = dashboardData.total_value || 0
-    const previousRevenue = dashboardData.previous_total_value || 0
+    console.log('Generating fallback data from dashboard:', dashboardData)
+    
+    const currentRevenue = dashboardData.total_value || 10000
+    const previousRevenue = dashboardData.previous_total_value || 8000
     
     // Create realistic timeline based on available data
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     const currentMonth = new Date().getMonth()
     
-    const data = months.slice(currentMonth - 5, currentMonth + 1).map((month, index) => {
+    // Get last 6 months
+    const lastSixMonths = []
+    for (let i = 5; i >= 0; i--) {
+      const monthIndex = (currentMonth - i + 12) % 12
+      lastSixMonths.push(months[monthIndex])
+    }
+    
+    const data = lastSixMonths.map((month, index) => {
       const progress = (index + 1) / 6
       const revenue = previousRevenue + (currentRevenue - previousRevenue) * progress
+      const growth = index > 0 ? 8 : 0
       
       return {
         period: month,
         revenue: Math.round(revenue),
         target: Math.round(revenue * 1.1), // 10% target
-        growth: index > 0 ? 8 : 0, // Mock growth for demo
+        growth: growth,
         rawPeriod: month
       }
     })
@@ -68,11 +89,18 @@ const RevenueChart = () => {
   }
 
   const formatPeriod = (period) => {
+    if (!period) return 'Unknown'
+    
     if (period.includes('-')) {
-      // Format "2024-10" to "Oct"
-      const [year, month] = period.split('-')
-      const date = new Date(year, month - 1)
-      return date.toLocaleDateString('en-US', { month: 'short' })
+      try {
+        // Format "2024-10" to "Oct"
+        const [year, month] = period.split('-')
+        const date = new Date(parseInt(year), parseInt(month) - 1)
+        return date.toLocaleDateString('en-US', { month: 'short' })
+      } catch (e) {
+        console.error('Error formatting period:', period, e)
+        return period
+      }
     }
     return period
   }
@@ -130,8 +158,34 @@ const RevenueChart = () => {
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Revenue Trends
+          </h3>
+        </div>
         <div className="flex items-center justify-center h-80">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error && revenueData.length === 0) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Revenue Trends
+          </h3>
+        </div>
+        <div className="h-80 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
+          <div className="text-red-500 mb-2">{error}</div>
+          <button 
+            onClick={fetchRevenueTrends}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
         </div>
       </div>
     )
@@ -194,7 +248,13 @@ const RevenueChart = () => {
       {revenueData.length === 0 ? (
         <div className="h-80 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
           <div className="text-lg mb-2">No revenue data available</div>
-          <div className="text-sm">Revenue trends will appear here once you have data</div>
+          <div className="text-sm">Revenue trends will appear here once you have closed deals</div>
+          <button 
+            onClick={fetchRevenueTrends}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Refresh Data
+          </button>
         </div>
       ) : (
         <div className="h-80">

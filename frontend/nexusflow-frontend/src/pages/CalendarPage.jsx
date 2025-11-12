@@ -16,7 +16,8 @@ import {
   MapPin,
   Users,
   Phone,
-  CheckCircle
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
 import EventForm from '../components/calendar/EventForm'
@@ -34,24 +35,24 @@ const CalendarPage = () => {
     calendarEventsError 
   } = useDataStore()
 
-  // State management
   const [currentDate, setCurrentDate] = useState(new Date())
   const [view, setView] = useState('month')
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [showEventForm, setShowEventForm] = useState(false)
   const [showEventDetails, setShowEventDetails] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [eventToEdit, setEventToEdit] = useState(null)
+  const [eventToDelete, setEventToDelete] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState('all')
   const [showSuccess, setShowSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
 
-  // Fetch events on component mount and when currentDate/view changes
   useEffect(() => {
     const params = getFetchParams()
     fetchCalendarEvents(params)
   }, [currentDate, view, fetchCalendarEvents])
 
-  // Get fetch parameters based on current view
   const getFetchParams = () => {
     const params = {}
     
@@ -68,14 +69,17 @@ const CalendarPage = () => {
       params.start_date = startOfWeek.toISOString().split('T')[0]
       params.end_date = endOfWeek.toISOString().split('T')[0]
     } else if (view === 'day') {
-      params.start_date = currentDate.toISOString().split('T')[0]
-      params.end_date = currentDate.toISOString().split('T')[0]
+      const startOfDay = new Date(currentDate)
+      startOfDay.setHours(0, 0, 0, 0)
+      const endOfDay = new Date(currentDate)
+      endOfDay.setHours(23, 59, 59, 999)
+      params.start_date = startOfDay.toISOString()
+      params.end_date = endOfDay.toISOString()
     }
     
     return params
   }
 
-  // Navigation functions
   const navigateDate = (direction) => {
     const newDate = new Date(currentDate)
     
@@ -94,7 +98,6 @@ const CalendarPage = () => {
     setCurrentDate(new Date())
   }
 
-  // Event handlers - Fixed with better error handling
   const handleCreateEvent = (date = null) => {
     setEventToEdit(null)
     setShowEventForm(true)
@@ -111,23 +114,35 @@ const CalendarPage = () => {
     setShowEventDetails(true)
   }
 
-  const handleDeleteEvent = async (event) => {
-    if (window.confirm(`Are you sure you want to delete "${event.title}"?`)) {
-      try {
-        await deleteCalendarEvent(event.id)
-        setShowEventDetails(false)
-        setSelectedEvent(null)
-        // Refresh events
-        const params = getFetchParams()
-        await fetchCalendarEvents(params)
-      } catch (err) {
-        console.error('❌ Failed to delete event:', err)
-        alert('Failed to delete event. Please try again.')
-      }
+  const handleDeleteClick = (event) => {
+    setEventToDelete(event)
+    setShowDeleteConfirm(true)
+    setShowEventDetails(false)
+  }
+
+  const handleDeleteEvent = async () => {
+    if (!eventToDelete) return
+
+    try {
+      await deleteCalendarEvent(eventToDelete.id)
+      
+      setSuccessMessage('Event deleted successfully!')
+      setShowSuccess(true)
+      setTimeout(() => setShowSuccess(false), 3000)
+      
+      setShowDeleteConfirm(false)
+      setEventToDelete(null)
+      setSelectedEvent(null)
+      
+      const params = getFetchParams()
+      await fetchCalendarEvents(params)
+      
+    } catch (err) {
+      console.error('❌ Failed to delete event:', err)
+      alert('Failed to delete event. Please try again.')
     }
   }
 
-  // Fixed save event function with better error handling
   const handleSaveEvent = async (eventData) => {
     try {
       console.log('💾 Saving event:', eventData)
@@ -135,11 +150,15 @@ const CalendarPage = () => {
       if (eventToEdit) {
         console.log('✏️ Updating existing event with ID:', eventToEdit.id)
         await updateCalendarEvent(eventToEdit.id, eventData)
+        
+        setSuccessMessage('Event updated successfully!')
+        setShowSuccess(true)
+        setTimeout(() => setShowSuccess(false), 3000)
       } else {
         console.log('🆕 Creating new event')
         await createCalendarEvent(eventData)
         
-        // Show success image for new events only
+        setSuccessMessage('Event created successfully!')
         setShowSuccess(true)
         setTimeout(() => setShowSuccess(false), 3000)
       }
@@ -148,7 +167,6 @@ const CalendarPage = () => {
       setShowEventForm(false)
       setEventToEdit(null)
       
-      // Refresh events
       const params = getFetchParams()
       await fetchCalendarEvents(params)
       
@@ -156,10 +174,8 @@ const CalendarPage = () => {
       console.error('❌ Failed to save event:', err)
       console.log('Error response:', err.response)
       
-      // Show detailed error message
       let errorMessage = 'Failed to save event. Please try again.'
       if (err.response?.data) {
-        // Handle Django validation errors
         if (typeof err.response.data === 'object') {
           const errors = Object.entries(err.response.data)
             .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
@@ -176,19 +192,20 @@ const CalendarPage = () => {
 
   const handleCloseModal = () => {
     setShowEventForm(false)
+    setShowEventDetails(false)
+    setShowDeleteConfirm(false)
     setEventToEdit(null)
+    setEventToDelete(null)
+    setSelectedEvent(null)
   }
 
-  // Filter and search events
   const filteredEvents = React.useMemo(() => {
     let events = calendarEvents || []
 
-    // Filter by type
     if (filterType !== 'all') {
       events = events.filter(event => event.event_type === filterType)
     }
 
-    // Search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase()
       events = events.filter(event => 
@@ -201,7 +218,6 @@ const CalendarPage = () => {
     return events
   }, [calendarEvents, filterType, searchTerm])
 
-  // Get events for the current view
   const getEventsForView = () => {
     if (view === 'list') {
       return filteredEvents.sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
@@ -209,7 +225,6 @@ const CalendarPage = () => {
     return filteredEvents
   }
 
-  // Render different views
   const renderCalendarView = () => {
     const viewProps = {
       currentDate,
@@ -229,15 +244,14 @@ const CalendarPage = () => {
         return <ListView 
           {...viewProps}
           onEditEvent={handleEditEvent}
-          onDeleteEvent={handleDeleteEvent}
+          onDeleteEvent={handleDeleteClick}
         />
       default:
         return <MonthView {...viewProps} />
     }
   }
 
-  // Success Image Component
-  const SuccessImage = () => (
+  const SuccessModal = () => (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
         <div className="w-20 h-20 mx-auto mb-4 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
@@ -246,10 +260,10 @@ const CalendarPage = () => {
           </svg>
         </div>
         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-          Event Created!
+          Success!
         </h3>
         <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Your event has been successfully added to the calendar.
+          {successMessage}
         </p>
         <button
           onClick={() => setShowSuccess(false)}
@@ -261,7 +275,49 @@ const CalendarPage = () => {
     </div>
   )
 
-  // Loading State Component
+  const DeleteConfirmationModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+              <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Delete Event
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                This action cannot be undone
+              </p>
+            </div>
+          </div>
+          
+          <p className="text-gray-700 dark:text-gray-300 mb-6">
+            Are you sure you want to delete <strong>"{eventToDelete?.title}"</strong>? This event will be permanently removed.
+          </p>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={handleCloseModal}
+              className="text-gray-700 dark:text-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteEvent}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Event
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
   if (calendarEventsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -270,7 +326,6 @@ const CalendarPage = () => {
     )
   }
 
-  // Error State Component
   if (calendarEventsError) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -288,7 +343,6 @@ const CalendarPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
@@ -311,13 +365,10 @@ const CalendarPage = () => {
           </div>
         </div>
 
-        {/* Success Message */}
-        {showSuccess && <SuccessImage />}
+        {showSuccess && <SuccessModal />}
 
-        {/* Controls */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-            {/* View Controls */}
             <div className="flex items-center gap-2">
               <Button
                 variant={view === 'month' ? 'primary' : 'outline'}
@@ -341,17 +392,16 @@ const CalendarPage = () => {
               >
                 Day
               </Button>
-              <Button
+              {/* <Button
                 variant={view === 'list' ? 'primary' : 'outline'}
                 onClick={() => setView('list')}
                 size="sm"
               >
                 <List className="h-4 w-4 mr-2" />
                 List
-              </Button>
+              </Button> */}
             </div>
 
-            {/* Date Navigation */}
             <div className="flex items-center gap-4">
               <Button
                 variant="outline"
@@ -392,7 +442,6 @@ const CalendarPage = () => {
               </Button>
             </div>
 
-            {/* Search and Filter */}
             <div className="flex items-center gap-3">
               <Input
                 placeholder="Search events..."
@@ -418,14 +467,12 @@ const CalendarPage = () => {
           </div>
         </div>
 
-        {/* Calendar View */}
         {!calendarEventsLoading && !calendarEventsError && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             {renderCalendarView()}
           </div>
         )}
 
-        {/* Event Form Modal */}
         {showEventForm && (
           <EventForm
             event={eventToEdit}
@@ -435,24 +482,21 @@ const CalendarPage = () => {
           />
         )}
 
-        {/* Event Details Modal */}
         {showEventDetails && selectedEvent && (
           <EventDetailsModal
             event={selectedEvent}
             onEdit={() => handleEditEvent(selectedEvent)}
-            onDelete={() => handleDeleteEvent(selectedEvent)}
-            onClose={() => {
-              setShowEventDetails(false)
-              setSelectedEvent(null)
-            }}
+            onDelete={() => handleDeleteClick(selectedEvent)}
+            onClose={handleCloseModal}
           />
         )}
+
+        {showDeleteConfirm && <DeleteConfirmationModal />}
       </div>
     </div>
   )
 }
 
-// Month View Component with multi-day event support
 const MonthView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
   const getDaysInMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
@@ -471,7 +515,6 @@ const MonthView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
       const nextDay = new Date(currentDay)
       nextDay.setDate(currentDay.getDate() + 1)
       
-      // Event spans this day if it starts before this day ends and ends after this day starts
       return eventStart < nextDay && eventEnd > currentDay
     })
   }
@@ -481,14 +524,12 @@ const MonthView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
     const firstDay = getFirstDayOfMonth(currentDate)
     const days = []
 
-    // Previous month days
     for (let i = 0; i < firstDay; i++) {
       days.push(
         <div key={`prev-${i}`} className="p-2 border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"></div>
       )
     }
 
-    // Current month days
     for (let day = 1; day <= daysInMonth; day++) {
       const dayEvents = getEventsForDay(day)
       const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString()
@@ -550,7 +591,6 @@ const MonthView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
   )
 }
 
-// Week View Component with multi-day event support
 const WeekView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
   const days = []
   const startOfWeek = getWeekStartDate(currentDate)
@@ -597,7 +637,6 @@ const WeekView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
           </div>
         ))}
         
-        {/* Time slots */}
         {Array.from({ length: 14 }, (_, i) => i + 7).map(hour => (
           <React.Fragment key={hour}>
             <div className="p-2 text-right text-sm text-gray-500 dark:text-gray-400 border-r border-gray-200 dark:border-gray-700">
@@ -640,12 +679,23 @@ const WeekView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
   )
 }
 
-// Day View Component
 const DayView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
   const dayEvents = events.filter(event => {
-    const eventDate = new Date(event.start_time)
-    return eventDate.toDateString() === currentDate.toDateString()
+    const eventStart = new Date(event.start_time)
+    const eventEnd = new Date(event.end_time)
+    
+    const startOfDay = new Date(currentDate)
+    startOfDay.setHours(0, 0, 0, 0)
+    
+    const endOfDay = new Date(currentDate)
+    endOfDay.setHours(23, 59, 59, 999)
+    
+    return eventStart <= endOfDay && eventEnd >= startOfDay
   })
+
+  const sortedEvents = dayEvents.sort((a, b) => 
+    new Date(a.start_time) - new Date(b.start_time)
+  )
 
   return (
     <div className="p-6">
@@ -661,50 +711,55 @@ const DayView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
       </div>
       
       <div className="space-y-4 max-w-2xl mx-auto">
-        {dayEvents.length > 0 ? (
-          dayEvents.map((event, index) => (
-            <div
-              key={index}
-              onClick={() => onEventClick(event)}
-              className={`p-4 rounded-lg border-l-4 cursor-pointer transition-all hover:shadow-md ${
-                getEventColorClasses(event.event_type, true)
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900 dark:text-white">
-                    {event.title}
-                  </h4>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {formatTime(event.start_time)} - {formatTime(event.end_time)}
-                    </div>
-                    {event.location && (
+        {sortedEvents.length > 0 ? (
+          sortedEvents.map((event, index) => {
+            const eventStart = new Date(event.start_time)
+            const eventEnd = new Date(event.end_time)
+            
+            return (
+              <div
+                key={index}
+                onClick={() => onEventClick(event)}
+                className={`p-4 rounded-lg border-l-4 cursor-pointer transition-all hover:shadow-md ${
+                  getEventColorClasses(event.event_type, true)
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-900 dark:text-white">
+                      {event.title}
+                    </h4>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
                       <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        {event.location}
+                        <Clock className="h-4 w-4" />
+                        {formatTime(event.start_time)} - {formatTime(event.end_time)}
                       </div>
+                      {event.location && (
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          {event.location}
+                        </div>
+                      )}
+                    </div>
+                    {event.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
+                        {event.description}
+                      </p>
                     )}
                   </div>
-                  {event.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
-                      {event.description}
-                    </p>
-                  )}
-                </div>
-                <div className={`px-2 py-1 rounded-full text-xs ${
-                  event.status === 'completed' 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                    : event.status === 'cancelled'
-                    ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                }`}>
-                  {event.status?.replace('_', ' ') || 'scheduled'}
+                  <div className={`px-2 py-1 rounded-full text-xs ${
+                    event.status === 'completed' 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                      : event.status === 'cancelled'
+                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                      : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                  }`}>
+                    {event.status?.replace('_', ' ') || 'scheduled'}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            )
+          })
         ) : (
           <div 
             className="text-center py-12 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg"
@@ -720,7 +775,6 @@ const DayView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
   )
 }
 
-// List View Component
 const ListView = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
   const [selectedEvent, setSelectedEvent] = useState(null)
 
@@ -845,7 +899,6 @@ const ListView = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
   )
 }
 
-// Event Details Modal Component
 const EventDetailsModal = ({ event, onEdit, onDelete, onClose }) => {
   const getEventIcon = (eventType) => {
     switch (eventType) {
@@ -940,7 +993,6 @@ const EventDetailsModal = ({ event, onEdit, onDelete, onClose }) => {
   )
 }
 
-// Helper functions
 const getEventColorClasses = (eventType, isBorder = false) => {
   const baseClasses = isBorder ? 'border-l-4' : ''
   

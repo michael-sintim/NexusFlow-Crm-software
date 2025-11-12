@@ -13,12 +13,13 @@ calendar_detail = CalendarEventViewSet.as_view({
     'delete': 'destroy',
 })
 
+# FIXED: Use the correct method names from your viewset
 calendar_today = CalendarEventViewSet.as_view({
-    'get': 'today',
+    'get': 'today_events',  # Changed from 'today' to 'today_events'
 })
 
 calendar_upcoming = CalendarEventViewSet.as_view({
-    'get': 'upcoming',
+    'get': 'upcoming_events',  # Changed from 'upcoming' to 'upcoming_events'
 })
 
 urlpatterns = [
@@ -39,4 +40,6 @@ urlpatterns = [
     path('calendar/<int:pk>/', calendar_detail, name='calendar-detail'),
     path('calendar/today/', calendar_today, name='calendar-today'),
     path('calendar/upcoming/', calendar_upcoming, name='calendar-upcoming'),
+    
+
 ]

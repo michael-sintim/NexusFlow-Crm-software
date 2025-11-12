@@ -4,7 +4,7 @@ import axios from 'axios'
 // 🔧 BASE CONFIGURATION
 // ==============================
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://41.74.81.68:8000/api'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -231,7 +231,7 @@ export const contactsAPI = {
   getById: (id) => get(`/contacts/contacts/${id}/`),
   create: (data) => post('/contacts/contacts/', data),
   update: (id, data) => put(`/contacts/contacts/${id}/`, data),
-  delete: (id) => del(`/contacts/contacts/${id}/`),
+  delete: (id) => del(`/contacts/contacts/${id}/`), 
 }
 
 // ==============================
@@ -243,7 +243,11 @@ export const opportunitiesAPI = {
   getById: (id) => get(`/opportunities/opportunities/${id}/`),
   create: (data) => post('/opportunities/opportunities/', data),
   update: (id, data) => put(`/opportunities/opportunities/${id}/`, data),
-  delete: (id) => del(`/opportunities/opportunities/${id}/`),
+  delete: (id) => del(`/opportunities/opportunities/${id}/`), 
+  updateStage: (id, stage) => {
+    console.log('🔄 API: Calling updateStage with:', { id, stage });
+    return patch(`/opportunities/opportunities/${id}/`, { stage });
+  },
 }
 
 // ==============================
@@ -265,6 +269,8 @@ export const tasksAPI = {
 export const analyticsAPI = {
   getDashboard: () => get('/analytics/dashboard/'),
   getPipeline: () => get('/analytics/pipeline/'),
+
+
 }
 
 export { get, post, put, patch, del }

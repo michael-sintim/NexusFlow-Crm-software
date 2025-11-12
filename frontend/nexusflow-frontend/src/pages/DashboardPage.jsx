@@ -373,8 +373,8 @@ const DashboardPage = () => {
                     <Target className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">New Opportunity</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Start sales opportunity</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">New Deal</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Start Deals</p>
                   </div>
                 </div>
               </button>
@@ -430,8 +430,8 @@ const DashboardPage = () => {
                     <Briefcase className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">View Pipeline</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Sales opportunities</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">Revenue</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400"> View Revenue</p>
                   </div>
                 </div>
               </button>
@@ -443,7 +443,7 @@ const DashboardPage = () => {
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-green-500" />
-                New Opportunities
+                Recent Revenue 
               </h3>
               <div className="space-y-3">
                 {recentOpportunities.map((opp, index) => (

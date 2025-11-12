@@ -83,9 +83,9 @@ const AnalyticsPage = () => {
 
   // Calculate stage performance for pipeline
   const stagePerformance = [
-    { name: 'Prospect', count: opportunities?.filter(opp => opp.stage === 'prospect').length || 0, value: opportunities?.filter(opp => opp.stage === 'prospect').reduce((sum, opp) => sum + (parseFloat(opp.value) || 0), 0) || 0 },
-    { name: 'Qualified', count: opportunities?.filter(opp => opp.stage === 'qualified').length || 0, value: opportunities?.filter(opp => opp.stage === 'qualified').reduce((sum, opp) => sum + (parseFloat(opp.value) || 0), 0) || 0 },
-    { name: 'Proposal', count: opportunities?.filter(opp => opp.stage === 'proposal').length || 0, value: opportunities?.filter(opp => opp.stage === 'proposal').reduce((sum, opp) => sum + (parseFloat(opp.value) || 0), 0) || 0 },
+    { name: 'New Lead', count: opportunities?.filter(opp => opp.stage === 'prospect').length || 0, value: opportunities?.filter(opp => opp.stage === 'prospect').reduce((sum, opp) => sum + (parseFloat(opp.value) || 0), 0) || 0 },
+    { name: 'Needs', count: opportunities?.filter(opp => opp.stage === 'qualified').length || 0, value: opportunities?.filter(opp => opp.stage === 'qualified').reduce((sum, opp) => sum + (parseFloat(opp.value) || 0), 0) || 0 },
+    { name: 'Price Discussion', count: opportunities?.filter(opp => opp.stage === 'proposal').length || 0, value: opportunities?.filter(opp => opp.stage === 'proposal').reduce((sum, opp) => sum + (parseFloat(opp.value) || 0), 0) || 0 },
     { name: 'Negotiation', count: opportunities?.filter(opp => opp.stage === 'negotiation').length || 0, value: opportunities?.filter(opp => opp.stage === 'negotiation').reduce((sum, opp) => sum + (parseFloat(opp.value) || 0), 0) || 0 },
     { name: 'Closed Won', count: wonOpportunities, value: opportunities?.filter(opp => opp.stage === 'closed_won').reduce((sum, opp) => sum + (parseFloat(opp.value) || 0), 0) || 0 },
   ]
@@ -197,7 +197,7 @@ const AnalyticsPage = () => {
               <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">Pipeline Value</span>
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">Revenue </span>
                 </div>
                 <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">
                   ${(totalPipelineValue / 1000).toFixed(0)}K

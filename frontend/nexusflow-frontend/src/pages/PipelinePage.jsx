@@ -215,7 +215,7 @@ const PipelinePage = () => {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    Sales Pipeline
+                    Deal Flow 
                   </h1>
                   <p className="text-gray-600 dark:text-gray-400 mt-1 text-lg">
                     Track and manage your sales opportunities
@@ -230,7 +230,7 @@ const PipelinePage = () => {
                 className="shadow-lg shadow-blue-500/25 bg-blue-500"
               >
                 <Plus className="h-4 w-4 mr-2 bg-blue-500" />
-                Add Opportunity
+                Add Deal
               </Button>
             </div>
           </div>
@@ -297,7 +297,7 @@ const PipelinePage = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Opportunity Pipeline
+                    Deal Flow Management
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400 mt-1">
                     Manage your deals across stages

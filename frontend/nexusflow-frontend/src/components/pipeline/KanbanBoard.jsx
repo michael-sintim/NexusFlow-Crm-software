@@ -9,8 +9,8 @@ import { MoreHorizontal, User, Building, DollarSign, Edit, Trash2, Eye, ArrowLef
 const DEAL_STAGES = [
   { id: 'prospect', name: 'New Lead', color: 'bg-blue-500', textColor: 'text-blue-700' },
   { id: 'qualified', name: 'Client Needs', color: 'bg-purple-500', textColor: 'text-purple-700' },
-  { id: 'proposal', name: 'Proposal', color: 'bg-yellow-500', textColor: 'text-yellow-700' },
-  { id: 'negotiation', name: 'Negotiation', color: 'bg-orange-500', textColor: 'text-orange-700' },
+  { id: 'proposal', name: 'Negotiation', color: 'bg-yellow-500', textColor: 'text-yellow-700' },
+  { id: 'negotiation', name: 'Final Review', color: 'bg-orange-500', textColor: 'text-orange-700' },
   { id: 'closed_won', name: 'Closed Won', color: 'bg-green-500', textColor: 'text-green-700' },
   { id: 'closed_lost', name: 'Closed Lost', color: 'bg-red-500', textColor: 'text-red-700' }
 ]

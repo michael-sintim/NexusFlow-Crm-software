@@ -293,32 +293,7 @@ const EventForm = ({ event, onSave, onCancel }) => {
               </div>
 
               {/* Color Selection */}
-              <div>
-                <label className="block text-sm font-semibold text-white mb-2 flex items-center">
-                  <Palette className="h-4 w-4 mr-2 text-gray-400" />
-                  Event Color
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {colors.map(color => (
-                    <button
-                      key={color.value}
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, color: color.value }))}
-                      className={`p-2 rounded-lg border-2 transition-all transform hover:scale-105 ${
-                        formData.color === color.value 
-                          ? 'border-white shadow-lg scale-105' 
-                          : 'border-gray-600 hover:border-gray-400'
-                      }`}
-                      title={color.name}
-                    >
-                      <div
-                        className="w-full h-8 rounded shadow-md"
-                        style={{ backgroundColor: color.value }}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
+              
             </div>
           </div>
 
