@@ -47,6 +47,9 @@ const CalendarPage = () => {
   const [filterType, setFilterType] = useState('all')
   const [showSuccess, setShowSuccess] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  const [showDayEventsModal, setShowDayEventsModal] = useState(false)
+  const [dayEvents, setDayEvents] = useState([])
+  const [selectedDay, setSelectedDay] = useState(null)
 
   useEffect(() => {
     const params = getFetchParams()
@@ -194,9 +197,18 @@ const CalendarPage = () => {
     setShowEventForm(false)
     setShowEventDetails(false)
     setShowDeleteConfirm(false)
+    setShowDayEventsModal(false)
     setEventToEdit(null)
     setEventToDelete(null)
     setSelectedEvent(null)
+    setSelectedDay(null)
+    setDayEvents([])
+  }
+
+  const handleShowDayEvents = (day, events) => {
+    setSelectedDay(day)
+    setDayEvents(events)
+    setShowDayEventsModal(true)
   }
 
   const filteredEvents = React.useMemo(() => {
@@ -230,7 +242,8 @@ const CalendarPage = () => {
       currentDate,
       events: getEventsForView(),
       onEventClick: handleViewEvent,
-      onCreateEvent: handleCreateEvent
+      onCreateEvent: handleCreateEvent,
+      onShowDayEvents: handleShowDayEvents
     }
 
     switch (view) {
@@ -318,6 +331,88 @@ const CalendarPage = () => {
     </div>
   )
 
+  const DayEventsModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <CalendarIcon className="h-6 w-6 text-blue-500" />
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Events for {selectedDay?.toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  month: 'long', 
+                  day: 'numeric', 
+                  year: 'numeric' 
+                })}
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleCloseModal}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          <div className="space-y-4">
+            {dayEvents.map((event, index) => (
+              <div
+                key={index}
+                onClick={() => {
+                  handleViewEvent(event)
+                  handleCloseModal()
+                }}
+                className={`p-4 rounded-lg border-l-4 cursor-pointer transition-all hover:shadow-md ${
+                  getEventColorClasses(event.event_type, true)
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-900 dark:text-white">
+                      {event.title}
+                    </h4>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {formatTime(event.start_time)} - {formatTime(event.end_time)}
+                      </div>
+                      {event.location && (
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          {event.location}
+                        </div>
+                      )}
+                    </div>
+                    {event.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
+                        {event.description}
+                      </p>
+                    )}
+                  </div>
+                  <div className={`px-2 py-1 rounded-full text-xs ${
+                    event.status === 'completed' 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                      : event.status === 'cancelled'
+                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                      : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                  }`}>
+                    {event.status?.replace('_', ' ') || 'scheduled'}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
   if (calendarEventsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -392,14 +487,6 @@ const CalendarPage = () => {
               >
                 Day
               </Button>
-              {/* <Button
-                variant={view === 'list' ? 'primary' : 'outline'}
-                onClick={() => setView('list')}
-                size="sm"
-              >
-                <List className="h-4 w-4 mr-2" />
-                List
-              </Button> */}
             </div>
 
             <div className="flex items-center gap-4">
@@ -492,12 +579,16 @@ const CalendarPage = () => {
         )}
 
         {showDeleteConfirm && <DeleteConfirmationModal />}
+
+        {showDayEventsModal && <DayEventsModal />}
       </div>
     </div>
   )
 }
 
-const MonthView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
+const MonthView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDayEvents }) => {
+  const MAX_VISIBLE_EVENTS = 3
+
   const getDaysInMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
   }
@@ -533,6 +624,8 @@ const MonthView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
     for (let day = 1; day <= daysInMonth; day++) {
       const dayEvents = getEventsForDay(day)
       const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString()
+      const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS)
+      const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS
       
       days.push(
         <div
@@ -549,7 +642,7 @@ const MonthView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
             {day}
           </div>
           <div className="space-y-1">
-            {dayEvents.map((event, index) => {
+            {visibleEvents.map((event, index) => {
               const eventStart = new Date(event.start_time)
               const isStartDay = eventStart.getDate() === day && eventStart.getMonth() === currentDate.getMonth()
               
@@ -569,6 +662,18 @@ const MonthView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
                 </div>
               )
             })}
+            {hiddenEventsCount > 0 && (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
+                  onShowDayEvents(clickedDate, dayEvents)
+                }}
+                className="text-xs p-1 rounded cursor-pointer bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500 text-center"
+              >
+                +{hiddenEventsCount} more
+              </div>
+            )}
           </div>
         </div>
       )
@@ -591,7 +696,9 @@ const MonthView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
   )
 }
 
-const WeekView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
+const WeekView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDayEvents }) => {
+  const MAX_VISIBLE_EVENTS = 2
+
   const days = []
   const startOfWeek = getWeekStartDate(currentDate)
 
@@ -599,6 +706,19 @@ const WeekView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
     const day = new Date(startOfWeek)
     day.setDate(startOfWeek.getDate() + i)
     days.push(day)
+  }
+
+  const getEventsForDay = (day) => {
+    return events.filter(event => {
+      const eventStart = new Date(event.start_time)
+      const eventEnd = new Date(event.end_time)
+      const startOfDay = new Date(day)
+      startOfDay.setHours(0, 0, 0, 0)
+      const endOfDay = new Date(day)
+      endOfDay.setHours(23, 59, 59, 999)
+      
+      return eventStart <= endOfDay && eventEnd >= startOfDay
+    })
   }
 
   const getEventsForTimeSlot = (day, hour) => {
@@ -618,24 +738,61 @@ const WeekView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
     <div className="p-6">
       <div className="grid grid-cols-8 gap-0">
         <div className="border-r border-gray-200 dark:border-gray-700"></div>
-        {days.map((day, index) => (
-          <div 
-            key={index} 
-            className="p-3 text-center border-b border-r border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
-            onClick={() => onCreateEvent(day)}
-          >
-            <div className="text-sm font-semibold text-gray-900 dark:text-white">
-              {day.toLocaleDateString('en-US', { weekday: 'short' })}
+        {days.map((day, index) => {
+          const dayEvents = getEventsForDay(day)
+          const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS)
+          const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS
+          
+          return (
+            <div 
+              key={index} 
+              className="p-3 text-center border-b border-r border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+              onClick={() => onCreateEvent(day)}
+            >
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                {day.toLocaleDateString('en-US', { weekday: 'short' })}
+              </div>
+              <div className={`text-lg font-bold ${
+                day.toDateString() === new Date().toDateString() 
+                  ? 'text-blue-600 dark:text-blue-400' 
+                  : 'text-gray-900 dark:text-white'
+              }`}>
+                {day.getDate()}
+              </div>
+              
+              {visibleEvents.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {visibleEvents.map((event, eventIndex) => (
+                    <div
+                      key={eventIndex}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onEventClick(event)
+                      }}
+                      className={`text-xs p-1 rounded cursor-pointer truncate ${
+                        getEventColorClasses(event.event_type)
+                      }`}
+                      title={event.title}
+                    >
+                      {formatTime(event.start_time)} {event.title}
+                    </div>
+                  ))}
+                  {hiddenEventsCount > 0 && (
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onShowDayEvents(day, dayEvents)
+                      }}
+                      className="text-xs p-1 rounded cursor-pointer bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500 text-center"
+                    >
+                      +{hiddenEventsCount} more
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <div className={`text-lg font-bold ${
-              day.toDateString() === new Date().toDateString() 
-                ? 'text-blue-600 dark:text-blue-400' 
-                : 'text-gray-900 dark:text-white'
-            }`}>
-              {day.getDate()}
-            </div>
-          </div>
-        ))}
+          )
+        })}
         
         {Array.from({ length: 14 }, (_, i) => i + 7).map(hour => (
           <React.Fragment key={hour}>
