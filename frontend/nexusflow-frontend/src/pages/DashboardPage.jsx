@@ -14,7 +14,8 @@ import {
   Mail,
   UserPlus,
   Briefcase,
-  Star
+  Star,
+  BarChart3  // ← Add this import
 } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
 import StatCard from '../components/dashboard/StatCard'
@@ -202,7 +203,6 @@ const DashboardPage = () => {
         <p className="text-gray-600 dark:text-gray-400 text-left mt-3 text-lg">
           Welcome back! Here's your activity overview and quick insights.
         </p>
-        
       </div>
 
       {/* Stats Grid */}
@@ -229,7 +229,6 @@ const DashboardPage = () => {
               >
                 View All
               </button>
-              
             </div>
             <div className="space-y-4">
               {recentTasks.length > 0 ? (
@@ -462,6 +461,17 @@ const DashboardPage = () => {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Revenue Chart - Moved to Bottom */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-blue-500" />
+            Revenue Trends
+          </h3>
+        </div>
+        <RevenueChart />
       </div>
     </div>
   )
