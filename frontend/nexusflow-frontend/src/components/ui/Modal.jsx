@@ -2,6 +2,7 @@ import React from 'react'
 import { X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { cn } from '../../lib/utils'
+import { useUIStore } from '../../store/uiStore'
 
 const Modal = ({ 
   isOpen, 
@@ -12,6 +13,43 @@ const Modal = ({
   className 
 }) => {
   const [mounted, setMounted] = React.useState(false)
+  const { theme } = useUIStore()
+
+  // Theme-based styles
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        secondary: 'bg-gray-50',
+      },
+      border: {
+        primary: 'border-gray-100',
+        secondary: 'border-gray-200'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        tertiary: 'text-gray-500'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800',
+        secondary: 'bg-gray-750',
+      },
+      border: {
+        primary: 'border-gray-700',
+        secondary: 'border-gray-600'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-300',
+        tertiary: 'text-gray-400'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
 
   React.useEffect(() => {
     setMounted(true)
@@ -46,21 +84,36 @@ const Modal = ({
       
       {/* Modal */}
       <div className={cn(
-        "relative bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-h-[90vh] overflow-auto",
+        "relative rounded-xl shadow-xl w-full max-h-[90vh] overflow-auto",
+        currentTheme.background.primary,
         sizes[size],
         className
       )}>
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className={cn(
+            "flex items-center justify-between p-6 border-b",
+            currentTheme.border.secondary
+          )}>
+            <h2 className={cn(
+              "text-lg font-semibold",
+              currentTheme.text.primary
+            )}>
               {title}
             </h2>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className={cn(
+                "p-1 rounded-lg transition-colors",
+                theme === 'light' 
+                  ? "hover:bg-gray-100" 
+                  : "hover:bg-gray-700"
+              )}
             >
-              <X className="h-5 w-5" />
+              <X className={cn(
+                "h-5 w-5",
+                currentTheme.text.primary
+              )} />
             </button>
           </div>
         )}

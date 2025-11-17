@@ -20,11 +20,13 @@ import {
   AlertTriangle
 } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
+import { useUIStore } from '../store/uiStore'
 import EventForm from '../components/calendar/EventForm'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 
 const CalendarPage = () => {
+  const { theme } = useUIStore()
   const { 
     calendarEvents, 
     fetchCalendarEvents, 
@@ -50,6 +52,68 @@ const CalendarPage = () => {
   const [showDayEventsModal, setShowDayEventsModal] = useState(false)
   const [dayEvents, setDayEvents] = useState([])
   const [selectedDay, setSelectedDay] = useState(null)
+
+  // Theme-based styles
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        secondary: 'bg-gray-50',
+        overlay: 'bg-black bg-opacity-50',
+        modal: 'bg-white',
+        input: 'bg-white',
+        section: 'bg-gray-50',
+        page: 'bg-gray-50'
+      },
+      border: {
+        primary: 'border-gray-200',
+        secondary: 'border-gray-300',
+        input: 'border-gray-300',
+        calendar: 'border-gray-100'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        tertiary: 'text-gray-500',
+        label: 'text-gray-700'
+      },
+      button: {
+        secondary: 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200',
+        cancel: 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200',
+        outline: 'border-gray-300 text-gray-700 hover:bg-gray-50'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800',
+        secondary: 'bg-gray-750',
+        overlay: 'bg-black bg-opacity-50',
+        modal: 'bg-gray-800',
+        input: 'bg-gray-700',
+        section: 'bg-gray-750',
+        page: 'bg-gray-900'
+      },
+      border: {
+        primary: 'border-gray-700',
+        secondary: 'border-gray-600',
+        input: 'border-gray-600',
+        calendar: 'border-gray-700'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-300',
+        tertiary: 'text-gray-400',
+        label: 'text-gray-300'
+      },
+      button: {
+        secondary: 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600',
+        cancel: 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600',
+        outline: 'border-gray-600 text-gray-300 hover:bg-gray-700'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
 
   useEffect(() => {
     const params = getFetchParams()
@@ -243,7 +307,8 @@ const CalendarPage = () => {
       events: getEventsForView(),
       onEventClick: handleViewEvent,
       onCreateEvent: handleCreateEvent,
-      onShowDayEvents: handleShowDayEvents
+      onShowDayEvents: handleShowDayEvents,
+      theme: currentTheme
     }
 
     switch (view) {
@@ -265,17 +330,17 @@ const CalendarPage = () => {
   }
 
   const SuccessModal = () => (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
+    <div className={`fixed inset-0 flex items-center justify-center z-50 ${currentTheme.background.overlay}`}>
+      <div className={`${currentTheme.background.modal} rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl`}>
         <div className="w-20 h-20 mx-auto mb-4 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
           <svg className="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+        <h3 className={`text-xl font-bold ${currentTheme.text.primary} mb-2`}>
           Success!
         </h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
+        <p className={`${currentTheme.text.secondary} mb-4`}>
           {successMessage}
         </p>
         <button
@@ -289,24 +354,24 @@ const CalendarPage = () => {
   )
 
   const DeleteConfirmationModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
+    <div className={`fixed inset-0 ${currentTheme.background.overlay} flex items-center justify-center p-4 z-50`}>
+      <div className={`${currentTheme.background.modal} rounded-xl shadow-xl w-full max-w-md`}>
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
               <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h2 className={`text-lg font-semibold ${currentTheme.text.primary}`}>
                 Delete Event
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className={`text-sm ${currentTheme.text.secondary}`}>
                 This action cannot be undone
               </p>
             </div>
           </div>
           
-          <p className="text-gray-700 dark:text-gray-300 mb-6">
+          <p className={`${currentTheme.text.secondary} mb-6`}>
             Are you sure you want to delete <strong>"{eventToDelete?.title}"</strong>? This event will be permanently removed.
           </p>
 
@@ -314,7 +379,7 @@ const CalendarPage = () => {
             <Button
               variant="outline"
               onClick={handleCloseModal}
-              className="text-gray-700 dark:text-gray-300"
+              className={currentTheme.text.secondary}
             >
               Cancel
             </Button>
@@ -332,13 +397,13 @@ const CalendarPage = () => {
   )
 
   const DayEventsModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+    <div className={`fixed inset-0 ${currentTheme.background.overlay} flex items-center justify-center p-4 z-50`}>
+      <div className={`${currentTheme.background.modal} rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden`}>
+        <div className={`flex justify-between items-center p-6 border-b ${currentTheme.border.primary}`}>
           <div className="flex items-center gap-3">
             <CalendarIcon className="h-6 w-6 text-blue-500" />
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h2 className={`text-xl font-bold ${currentTheme.text.primary}`}>
                 Events for {selectedDay?.toLocaleDateString('en-US', { 
                   weekday: 'long', 
                   month: 'long', 
@@ -346,14 +411,14 @@ const CalendarPage = () => {
                   year: 'numeric' 
                 })}
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className={`text-sm ${currentTheme.text.secondary}`}>
                 {dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
           <button
             onClick={handleCloseModal}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            className={`p-2 hover:${currentTheme.background.secondary} rounded-lg transition-colors ${currentTheme.text.tertiary} hover:${currentTheme.text.primary}`}
           >
             <X className="h-5 w-5" />
           </button>
@@ -374,10 +439,10 @@ const CalendarPage = () => {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 dark:text-white">
+                    <h4 className={`font-semibold ${currentTheme.text.primary}`}>
                       {event.title}
                     </h4>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    <div className={`flex items-center gap-4 mt-2 text-sm ${currentTheme.text.secondary}`}>
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
                         {formatTime(event.start_time)} - {formatTime(event.end_time)}
@@ -390,7 +455,7 @@ const CalendarPage = () => {
                       )}
                     </div>
                     {event.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
+                      <p className={`text-sm ${currentTheme.text.secondary} mt-2 line-clamp-2`}>
                         {event.description}
                       </p>
                     )}
@@ -416,7 +481,7 @@ const CalendarPage = () => {
   if (calendarEventsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading calendar events...</div>
+        <div className={`text-lg ${currentTheme.text.primary}`}>Loading calendar events...</div>
       </div>
     )
   }
@@ -436,16 +501,16 @@ const CalendarPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className={`min-h-screen ${currentTheme.background.page} p-6`}>
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+              <h1 className={`text-3xl font-bold ${currentTheme.text.primary} flex items-center gap-3`}>
                 <CalendarIcon className="h-8 w-8 text-blue-600" />
                 Calendar
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">
+              <p className={`${currentTheme.text.secondary} mt-2`}>
                 Manage your schedule and events
               </p>
             </div>
@@ -462,7 +527,7 @@ const CalendarPage = () => {
 
         {showSuccess && <SuccessModal />}
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+        <div className={`${currentTheme.background.primary} rounded-xl p-6 shadow-sm border ${currentTheme.border.primary} mb-6`}>
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
             <div className="flex items-center gap-2">
               <Button
@@ -487,6 +552,14 @@ const CalendarPage = () => {
               >
                 Day
               </Button>
+              <Button
+                variant={view === 'list' ? 'primary' : 'outline'}
+                onClick={() => setView('list')}
+                size="sm"
+              >
+                <List className="h-4 w-4 mr-2" />
+                List
+              </Button>
             </div>
 
             <div className="flex items-center gap-4">
@@ -506,7 +579,7 @@ const CalendarPage = () => {
                 Today
               </Button>
               
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white min-w-48 text-center">
+              <h2 className={`text-lg font-semibold ${currentTheme.text.primary} min-w-48 text-center`}>
                 {view === 'month' && currentDate.toLocaleDateString('en-US', { 
                   month: 'long', 
                   year: 'numeric'
@@ -518,6 +591,7 @@ const CalendarPage = () => {
                   day: 'numeric',
                   year: 'numeric'
                 })}
+                {view === 'list' && 'All Events'}
               </h2>
               
               <Button
@@ -536,12 +610,13 @@ const CalendarPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 leftIcon={<Search className="h-4 w-4" />}
                 className="w-48"
+                theme={theme}
               />
               
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`px-3 py-2 border ${currentTheme.border.input} rounded-lg ${currentTheme.background.input} ${currentTheme.text.primary} focus:outline-none focus:ring-2 focus:ring-blue-500`}
               >
                 <option value="all">All Events</option>
                 <option value="meeting">Meetings</option>
@@ -555,7 +630,7 @@ const CalendarPage = () => {
         </div>
 
         {!calendarEventsLoading && !calendarEventsError && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className={`${currentTheme.background.primary} rounded-xl shadow-sm border ${currentTheme.border.primary} overflow-hidden`}>
             {renderCalendarView()}
           </div>
         )}
@@ -575,6 +650,7 @@ const CalendarPage = () => {
             onEdit={() => handleEditEvent(selectedEvent)}
             onDelete={() => handleDeleteClick(selectedEvent)}
             onClose={handleCloseModal}
+            theme={currentTheme}
           />
         )}
 
@@ -586,7 +662,7 @@ const CalendarPage = () => {
   )
 }
 
-const MonthView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDayEvents }) => {
+const MonthView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDayEvents, theme }) => {
   const MAX_VISIBLE_EVENTS = 3
 
   const getDaysInMonth = (date) => {
@@ -617,7 +693,7 @@ const MonthView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDay
 
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`prev-${i}`} className="p-2 border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"></div>
+        <div key={`prev-${i}`} className={`p-2 border ${theme.border.calendar} ${theme.background.secondary}`}></div>
       )
     }
 
@@ -630,15 +706,17 @@ const MonthView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDay
       days.push(
         <div
           key={day}
-          className={`p-2 border border-gray-100 dark:border-gray-700 min-h-32 cursor-pointer ${
-            isToday ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+          className={`p-2 border ${theme.border.calendar} min-h-32 cursor-pointer ${
+            isToday ? 'bg-blue-50 dark:bg-blue-900/20' : `${theme.background.primary} hover:${theme.background.secondary}`
           }`}
           onClick={() => {
             const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day)
             onCreateEvent(clickedDate)
           }}
         >
-          <div className={`text-sm font-medium mb-2 ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+          <div className={`text-sm font-medium mb-2 ${
+            isToday ? 'text-blue-600 dark:text-blue-400' : theme.text.primary
+          }`}>
             {day}
           </div>
           <div className="space-y-1">
@@ -686,7 +764,7 @@ const MonthView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDay
     <div className="p-6">
       <div className="grid grid-cols-7 gap-0">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="p-3 text-center font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700">
+          <div key={day} className={`p-3 text-center font-semibold ${theme.text.primary} border-b ${theme.border.primary}`}>
             {day}
           </div>
         ))}
@@ -696,7 +774,7 @@ const MonthView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDay
   )
 }
 
-const WeekView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDayEvents }) => {
+const WeekView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDayEvents, theme }) => {
   const MAX_VISIBLE_EVENTS = 2
 
   const days = []
@@ -737,7 +815,7 @@ const WeekView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDayE
   return (
     <div className="p-6">
       <div className="grid grid-cols-8 gap-0">
-        <div className="border-r border-gray-200 dark:border-gray-700"></div>
+        <div className={`border-r ${theme.border.primary}`}></div>
         {days.map((day, index) => {
           const dayEvents = getEventsForDay(day)
           const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS)
@@ -746,16 +824,16 @@ const WeekView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDayE
           return (
             <div 
               key={index} 
-              className="p-3 text-center border-b border-r border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+              className={`p-3 text-center border-b border-r ${theme.border.primary} cursor-pointer hover:${theme.background.secondary}`}
               onClick={() => onCreateEvent(day)}
             >
-              <div className="text-sm font-semibold text-gray-900 dark:text-white">
+              <div className={`text-sm font-semibold ${theme.text.primary}`}>
                 {day.toLocaleDateString('en-US', { weekday: 'short' })}
               </div>
               <div className={`text-lg font-bold ${
                 day.toDateString() === new Date().toDateString() 
                   ? 'text-blue-600 dark:text-blue-400' 
-                  : 'text-gray-900 dark:text-white'
+                  : theme.text.primary
               }`}>
                 {day.getDate()}
               </div>
@@ -796,7 +874,7 @@ const WeekView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDayE
         
         {Array.from({ length: 14 }, (_, i) => i + 7).map(hour => (
           <React.Fragment key={hour}>
-            <div className="p-2 text-right text-sm text-gray-500 dark:text-gray-400 border-r border-gray-200 dark:border-gray-700">
+            <div className={`p-2 text-right text-sm ${theme.text.tertiary} border-r ${theme.border.primary}`}>
               {hour}:00
             </div>
             {days.map((day, dayIndex) => {
@@ -805,7 +883,7 @@ const WeekView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDayE
               return (
                 <div 
                   key={dayIndex} 
-                  className="p-2 border-b border-r border-gray-200 dark:border-gray-700 min-h-16 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                  className={`p-2 border-b border-r ${theme.border.primary} min-h-16 cursor-pointer hover:${theme.background.secondary}`}
                   onClick={() => {
                     const clickedDateTime = new Date(day)
                     clickedDateTime.setHours(hour, 0, 0, 0)
@@ -836,7 +914,7 @@ const WeekView = ({ currentDate, events, onEventClick, onCreateEvent, onShowDayE
   )
 }
 
-const DayView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
+const DayView = ({ currentDate, events, onEventClick, onCreateEvent, theme }) => {
   const dayEvents = events.filter(event => {
     const eventStart = new Date(event.start_time)
     const eventEnd = new Date(event.end_time)
@@ -857,7 +935,7 @@ const DayView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
   return (
     <div className="p-6">
       <div className="text-center mb-6">
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h3 className={`text-2xl font-bold ${theme.text.primary}`}>
           {currentDate.toLocaleDateString('en-US', { 
             weekday: 'long', 
             month: 'long', 
@@ -883,10 +961,10 @@ const DayView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 dark:text-white">
+                    <h4 className={`font-semibold ${theme.text.primary}`}>
                       {event.title}
                     </h4>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    <div className={`flex items-center gap-4 mt-2 text-sm ${theme.text.secondary}`}>
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
                         {formatTime(event.start_time)} - {formatTime(event.end_time)}
@@ -899,7 +977,7 @@ const DayView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
                       )}
                     </div>
                     {event.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
+                      <p className={`text-sm ${theme.text.secondary} mt-2 line-clamp-2`}>
                         {event.description}
                       </p>
                     )}
@@ -919,12 +997,12 @@ const DayView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
           })
         ) : (
           <div 
-            className="text-center py-12 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg"
+            className={`text-center py-12 cursor-pointer hover:${theme.background.secondary} rounded-lg`}
             onClick={() => onCreateEvent(currentDate)}
           >
             <CalendarIcon className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No events scheduled for this day</p>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Click to create an event</p>
+            <p className={theme.text.tertiary}>No events scheduled for this day</p>
+            <p className={`text-sm ${theme.text.tertiary} mt-2`}>Click to create an event</p>
           </div>
         )}
       </div>
@@ -932,7 +1010,7 @@ const DayView = ({ currentDate, events, onEventClick, onCreateEvent }) => {
   )
 }
 
-const ListView = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
+const ListView = ({ events, onEventClick, onEditEvent, onDeleteEvent, theme }) => {
   const [selectedEvent, setSelectedEvent] = useState(null)
 
   const getEventIcon = (eventType) => {
@@ -951,7 +1029,7 @@ const ListView = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
           events.map((event, index) => (
             <div
               key={index}
-              className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              className={`flex items-center justify-between p-4 border ${theme.border.primary} rounded-lg hover:${theme.background.secondary} transition-colors`}
             >
               <div 
                 className="flex items-center gap-4 flex-1 cursor-pointer"
@@ -964,10 +1042,10 @@ const ListView = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-gray-900 dark:text-white truncate">
+                  <h4 className={`font-semibold ${theme.text.primary} truncate`}>
                     {event.title}
                   </h4>
-                  <div className="flex items-center gap-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
+                  <div className={`flex items-center gap-4 mt-1 text-sm ${theme.text.secondary}`}>
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {new Date(event.start_time).toLocaleString()}
@@ -999,20 +1077,20 @@ const ListView = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
                       e.stopPropagation()
                       setSelectedEvent(selectedEvent?.id === event.id ? null : event)
                     }}
-                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                    className={`p-1 hover:${theme.background.secondary} rounded`}
                   >
                     <MoreVertical className="h-4 w-4 text-gray-500" />
                   </button>
 
                   {selectedEvent?.id === event.id && (
-                    <div className="absolute right-0 top-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 min-w-32">
+                    <div className={`absolute right-0 top-8 ${theme.background.primary} border ${theme.border.primary} rounded-lg shadow-lg z-10 min-w-32`}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
                           onEventClick(event)
                           setSelectedEvent(null)
                         }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                        className={`w-full px-4 py-2 text-left text-sm hover:${theme.background.secondary} flex items-center gap-2 ${theme.text.primary}`}
                       >
                         <Eye className="h-4 w-4" />
                         View
@@ -1023,7 +1101,7 @@ const ListView = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
                           onEditEvent(event)
                           setSelectedEvent(null)
                         }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                        className={`w-full px-4 py-2 text-left text-sm hover:${theme.background.secondary} flex items-center gap-2 ${theme.text.primary}`}
                       >
                         <Edit className="h-4 w-4" />
                         Edit
@@ -1034,7 +1112,7 @@ const ListView = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
                           onDeleteEvent(event)
                           setSelectedEvent(null)
                         }}
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                        className={`w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2`}
                       >
                         <Trash2 className="h-4 w-4" />
                         Delete
@@ -1048,7 +1126,7 @@ const ListView = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
         ) : (
           <div className="text-center py-12">
             <CalendarIcon className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No events found</p>
+            <p className={theme.text.tertiary}>No events found</p>
           </div>
         )}
       </div>
@@ -1056,7 +1134,7 @@ const ListView = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
   )
 }
 
-const EventDetailsModal = ({ event, onEdit, onDelete, onClose }) => {
+const EventDetailsModal = ({ event, onEdit, onDelete, onClose, theme }) => {
   const getEventIcon = (eventType) => {
     switch (eventType) {
       case 'meeting': return <Users className="h-5 w-5 text-blue-500" />
@@ -1068,23 +1146,23 @@ const EventDetailsModal = ({ event, onEdit, onDelete, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+    <div className={`fixed inset-0 ${theme.background.overlay} flex items-center justify-center p-4 z-50`}>
+      <div className={`${theme.background.modal} rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden`}>
+        <div className={`flex justify-between items-center p-6 border-b ${theme.border.primary}`}>
           <div className="flex items-center gap-3">
             {getEventIcon(event.event_type)}
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h2 className={`text-xl font-bold ${theme.text.primary}`}>
                 {event.title}
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+              <p className={`text-sm ${theme.text.secondary} capitalize`}>
                 {event.event_type} • {event.status?.replace('_', ' ') || 'scheduled'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            className={`p-2 hover:${theme.background.secondary} rounded-lg`}
           >
             <X className="h-5 w-5" />
           </button>
@@ -1094,10 +1172,10 @@ const EventDetailsModal = ({ event, onEdit, onDelete, onClose }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                <label className={`block text-sm font-semibold ${theme.text.primary} mb-2`}>
                   Date & Time
                 </label>
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                <div className={`flex items-center gap-2 ${theme.text.secondary}`}>
                   <Clock className="h-4 w-4" />
                   {new Date(event.start_time).toLocaleString()} 
                   {event.end_time && ` - ${new Date(event.end_time).toLocaleTimeString()}`}
@@ -1106,10 +1184,10 @@ const EventDetailsModal = ({ event, onEdit, onDelete, onClose }) => {
 
               {event.location && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                  <label className={`block text-sm font-semibold ${theme.text.primary} mb-2`}>
                     Location
                   </label>
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                  <div className={`flex items-center gap-2 ${theme.text.secondary}`}>
                     <MapPin className="h-4 w-4" />
                     {event.location}
                   </div>
@@ -1118,16 +1196,16 @@ const EventDetailsModal = ({ event, onEdit, onDelete, onClose }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
+              <label className={`block text-sm font-semibold ${theme.text.primary} mb-2`}>
                 Description
               </label>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className={theme.text.secondary}>
                 {event.description || 'No description provided.'}
               </p>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className={`flex justify-end gap-3 pt-6 border-t ${theme.border.primary}`}>
             <Button
               variant="outline"
               onClick={onDelete}

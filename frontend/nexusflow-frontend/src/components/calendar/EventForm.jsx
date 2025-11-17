@@ -10,8 +10,10 @@ import {
   Phone,
   CheckCircle
 } from 'lucide-react'
+import { useUIStore } from '../../store/uiStore'
 
 const EventForm = ({ event, onSave, onCancel }) => {
+  const { theme } = useUIStore()
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -45,7 +47,7 @@ const EventForm = ({ event, onSave, onCancel }) => {
     { value: '1440', label: '1 day before' }
   ]
 
-  // Color options optimized for dark mode
+  // Color options that work well in both themes
   const colors = [
     { value: '#3b82f6', name: 'Blue' },
     { value: '#10b981', name: 'Green' },
@@ -56,6 +58,62 @@ const EventForm = ({ event, onSave, onCancel }) => {
     { value: '#f97316', name: 'Orange' },
     { value: '#84cc16', name: 'Lime' }
   ]
+
+  // Theme-based styles
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        secondary: 'bg-gray-50',
+        overlay: 'bg-gray-900 bg-opacity-50',
+        modal: 'bg-white',
+        input: 'bg-white',
+        section: 'bg-gray-50'
+      },
+      border: {
+        primary: 'border-gray-200',
+        secondary: 'border-gray-300',
+        input: 'border-gray-300'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        tertiary: 'text-gray-500',
+        label: 'text-gray-700'
+      },
+      button: {
+        secondary: 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200',
+        cancel: 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800',
+        secondary: 'bg-gray-750',
+        overlay: 'bg-black bg-opacity-50',
+        modal: 'bg-gray-800',
+        input: 'bg-gray-700',
+        section: 'bg-gray-750'
+      },
+      border: {
+        primary: 'border-gray-700',
+        secondary: 'border-gray-600',
+        input: 'border-gray-600'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-300',
+        tertiary: 'text-gray-400',
+        label: 'text-gray-300'
+      },
+      button: {
+        secondary: 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600',
+        cancel: 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
 
   useEffect(() => {
     if (event) {
@@ -118,10 +176,10 @@ const EventForm = ({ event, onSave, onCancel }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-10 flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-800 rounded-xl shadow-2xl border border-gray-700 w-full max-w-2xl max-h-[90vh] overflow-hidden">
+    <div className={`fixed inset-0 ${currentTheme.background.overlay} flex items-center justify-center p-4 z-50`}>
+      <div className={`${currentTheme.background.modal} rounded-xl shadow-2xl border ${currentTheme.border.primary} w-full max-w-2xl max-h-[90vh] overflow-hidden`}>
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-700 bg-gradient-to-r from-gray-800 to-gray-900">
+        <div className={`flex justify-between items-center p-6 border-b ${currentTheme.border.primary} bg-gradient-to-r ${theme === 'dark' ? 'from-gray-800 to-gray-900' : 'from-gray-50 to-gray-100'}`}>
           <div className="flex items-center space-x-3">
             <div 
               className="w-10 h-10 rounded-lg flex items-center justify-center text-white shadow-lg"
@@ -132,17 +190,17 @@ const EventForm = ({ event, onSave, onCancel }) => {
               })}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">
+              <h2 className={`text-xl font-bold ${currentTheme.text.primary}`}>
                 {event ? 'Edit Event' : 'Create New Event'}
               </h2>
-              <p className="text-sm text-gray-300">
+              <p className={`text-sm ${currentTheme.text.secondary}`}>
                 {event ? 'Update your event details' : 'Schedule a new event'}
               </p>
             </div>
           </div>
           <button
             onClick={onCancel}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors text-gray-400 hover:text-white"
+            className={`p-2 hover:${currentTheme.background.secondary} rounded-lg transition-colors ${currentTheme.text.tertiary} hover:${currentTheme.text.primary}`}
           >
             <X className="h-5 w-5" />
           </button>
@@ -156,7 +214,7 @@ const EventForm = ({ event, onSave, onCancel }) => {
             <div className="space-y-6">
               {/* Title */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-2 flex items-center">
+                <label className={`block text-sm font-semibold ${currentTheme.text.label} mb-2 flex items-center`}>
                   <Tag className="h-4 w-4 mr-2 text-gray-400" />
                   Event Title *
                 </label>
@@ -166,14 +224,14 @@ const EventForm = ({ event, onSave, onCancel }) => {
                   value={formData.title}
                   onChange={handleChange}
                   required
-                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 transition-colors"
+                  className={`w-full p-3 ${currentTheme.background.input} border ${currentTheme.border.input} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${currentTheme.text.primary} placeholder-gray-400 transition-colors`}
                   placeholder="Enter event title..."
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-2">
+                <label className={`block text-sm font-semibold ${currentTheme.text.label} mb-2`}>
                   Description
                 </label>
                 <textarea
@@ -181,14 +239,14 @@ const EventForm = ({ event, onSave, onCancel }) => {
                   value={formData.description}
                   onChange={handleChange}
                   rows={4}
-                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-white placeholder-gray-400 transition-colors"
+                  className={`w-full p-3 ${currentTheme.background.input} border ${currentTheme.border.input} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${currentTheme.text.primary} placeholder-gray-400 transition-colors`}
                   placeholder="Add event description, agenda, or notes..."
                 />
               </div>
 
               {/* Location */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-2 flex items-center">
+                <label className={`block text-sm font-semibold ${currentTheme.text.label} mb-2 flex items-center`}>
                   <MapPin className="h-4 w-4 mr-2 text-gray-400" />
                   Location
                 </label>
@@ -197,7 +255,7 @@ const EventForm = ({ event, onSave, onCancel }) => {
                   name="location"
                   value={formData.location}
                   onChange={handleChange}
-                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 transition-colors"
+                  className={`w-full p-3 ${currentTheme.background.input} border ${currentTheme.border.input} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${currentTheme.text.primary} placeholder-gray-400 transition-colors`}
                   placeholder="Add location or meeting link..."
                 />
               </div>
@@ -206,15 +264,15 @@ const EventForm = ({ event, onSave, onCancel }) => {
             {/* Right Column */}
             <div className="space-y-6">
               {/* Date & Time */}
-              <div className="bg-gray-750 rounded-lg p-4 border border-gray-700">
-                <h3 className="text-sm font-semibold text-white mb-3 flex items-center">
+              <div className={`${currentTheme.background.section} rounded-lg p-4 border ${currentTheme.border.secondary}`}>
+                <h3 className={`text-sm font-semibold ${currentTheme.text.primary} mb-3 flex items-center`}>
                   <Clock className="h-4 w-4 mr-2 text-gray-400" />
                   Date & Time
                 </h3>
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-300 mb-1">
+                      <label className={`block text-xs font-medium ${currentTheme.text.secondary} mb-1`}>
                         Start *
                       </label>
                       <input
@@ -223,11 +281,11 @@ const EventForm = ({ event, onSave, onCancel }) => {
                         value={formData.start_time}
                         onChange={handleChange}
                         required
-                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-white"
+                        className={`w-full p-2 text-sm ${currentTheme.background.input} border ${currentTheme.border.input} rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent ${currentTheme.text.primary}`}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-300 mb-1">
+                      <label className={`block text-xs font-medium ${currentTheme.text.secondary} mb-1`}>
                         End *
                       </label>
                       <input
@@ -236,7 +294,7 @@ const EventForm = ({ event, onSave, onCancel }) => {
                         value={formData.end_time}
                         onChange={handleChange}
                         required
-                        className="w-full p-2 text-sm bg-gray-700 border border-gray-600 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-white"
+                        className={`w-full p-2 text-sm ${currentTheme.background.input} border ${currentTheme.border.input} rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent ${currentTheme.text.primary}`}
                       />
                     </div>
                   </div>
@@ -246,16 +304,16 @@ const EventForm = ({ event, onSave, onCancel }) => {
                       name="all_day"
                       checked={formData.all_day}
                       onChange={handleChange}
-                      className="rounded border-gray-600 bg-gray-700 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-800"
+                      className={`rounded ${currentTheme.border.input} ${currentTheme.background.input} text-blue-500 focus:ring-blue-500 focus:ring-offset-${theme === 'dark' ? 'gray-800' : 'white'}`}
                     />
-                    <span className="text-sm text-gray-300">All day event</span>
+                    <span className={`text-sm ${currentTheme.text.secondary}`}>All day event</span>
                   </label>
                 </div>
               </div>
 
               {/* Event Type */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-2 flex items-center">
+                <label className={`block text-sm font-semibold ${currentTheme.text.label} mb-2 flex items-center`}>
                   <Calendar className="h-4 w-4 mr-2 text-gray-400" />
                   Event Type
                 </label>
@@ -263,10 +321,10 @@ const EventForm = ({ event, onSave, onCancel }) => {
                   name="event_type"
                   value={formData.event_type}
                   onChange={handleChange}
-                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
+                  className={`w-full p-3 ${currentTheme.background.input} border ${currentTheme.border.input} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${currentTheme.text.primary}`}
                 >
                   {eventTypes.map(type => (
-                    <option key={type.value} value={type.value} className="bg-gray-700">
+                    <option key={type.value} value={type.value} className={theme === 'dark' ? 'bg-gray-700' : 'bg-white'}>
                       {type.label}
                     </option>
                   ))}
@@ -275,34 +333,32 @@ const EventForm = ({ event, onSave, onCancel }) => {
 
               {/* Reminder */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-2">
+                <label className={`block text-sm font-semibold ${currentTheme.text.label} mb-2`}>
                   Set Reminder
                 </label>
                 <select
                   name="reminder_minutes"
                   value={formData.reminder_minutes}
                   onChange={handleChange}
-                  className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
+                  className={`w-full p-3 ${currentTheme.background.input} border ${currentTheme.border.input} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${currentTheme.text.primary}`}
                 >
                   {reminderOptions.map(option => (
-                    <option key={option.value} value={option.value} className="bg-gray-700">
+                    <option key={option.value} value={option.value} className={theme === 'dark' ? 'bg-gray-700' : 'bg-white'}>
                       {option.label}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Color Selection */}
-              
             </div>
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-700">
+          <div className={`flex justify-end space-x-3 pt-6 border-t ${currentTheme.border.primary}`}>
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-3 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 hover:text-white transition-colors"
+              className={`px-6 py-3 text-sm font-medium border rounded-lg transition-colors ${currentTheme.button.cancel}`}
             >
               Cancel
             </button>

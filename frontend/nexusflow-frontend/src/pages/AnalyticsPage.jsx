@@ -12,6 +12,7 @@ import {
   Activity
 } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
+import { useUIStore } from '../store/uiStore'
 import StatCard from '../components/dashboard/StatCard'
 import SalesFunnel from '../components/dashboard/SalesFunnel'
 import RevenueChart from '../components/dashboard/RevenueChart'
@@ -26,10 +27,50 @@ const AnalyticsPage = () => {
     tasks 
   } = useDataStore()
 
+  const { theme } = useUIStore()
+
   React.useEffect(() => {
     fetchDashboardData()
     fetchPipelineData()
   }, [fetchDashboardData, fetchPipelineData])
+
+  // Theme-based styles
+  const themeStyles = {
+    light: {
+      background: {
+        card: 'bg-white',
+        gradient: 'from-gray-50 to-gray-100',
+        metric: 'bg-gray-50'
+      },
+      border: {
+        card: 'border-gray-200',
+        metric: 'border-gray-200'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        tertiary: 'text-gray-500'
+      }
+    },
+    dark: {
+      background: {
+        card: 'bg-gray-800',
+        gradient: 'from-gray-800 to-gray-900',
+        metric: 'bg-gray-700'
+      },
+      border: {
+        card: 'border-gray-700',
+        metric: 'border-gray-600'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-300',
+        tertiary: 'text-gray-400'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
 
   // Calculate real metrics from data
   const totalOpportunities = opportunities?.length || 0
@@ -46,7 +87,7 @@ const AnalyticsPage = () => {
     {
       title: 'Win Rate',
       value: winRate,
-      change: 5, // This could be calculated from historical data
+      change: 5,
       changeType: 'positive',
       format: 'percent',
       icon: Trophy,
@@ -63,7 +104,7 @@ const AnalyticsPage = () => {
     },
     {
       title: 'Sales Cycle',
-      value: 45, // This would come from your actual data
+      value: 45,
       change: -8,
       changeType: 'positive',
       format: 'number',
@@ -92,174 +133,201 @@ const AnalyticsPage = () => {
 
   const totalValue = stagePerformance.reduce((sum, stage) => sum + stage.value, 0)
 
+  // Gradient backgrounds that work in both themes
+  const getMetricGradient = (baseColor) => {
+    return theme === 'dark' 
+      ? `from-${baseColor}-900/20 to-${baseColor}-800/20`
+      : `from-${baseColor}-50 to-${baseColor}-100`
+  }
+
+  const getMetricBorder = (baseColor) => {
+    return theme === 'dark'
+      ? `border-${baseColor}-800`
+      : `border-${baseColor}-200`
+  }
+
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-          Analytics Dashboard
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-3 text-lg">
-          Deep insights into your sales performance, trends, and key metrics
-        </p>
-      </div>
-
-      {/* Analytics Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {analyticsStats.map((stat, index) => (
-          <StatCard key={index} {...stat} />
-        ))}
-      </div>
-
-      {/* Main Charts */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-2 mb-6">
-            <BarChart3 className="h-5 w-5 text-blue-500" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Revenue Trends
-            </h3>
-          </div>
-          <RevenueChart />
+    <div className="min-h-dvh bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center">
+          <h1 className={`text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent`}>
+            Analytics Dashboard
+          </h1>
+          <p className={`${currentTheme.text.secondary} mt-3 text-lg`}>
+            Deep insights into your sales performance, trends, and key metrics
+          </p>
         </div>
-        
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-2 mb-6">
-            <PieChart className="h-5 w-5 text-purple-500" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Sales Funnel
-            </h3>
-          </div>
-          <SalesFunnel />
-        </div>
-      </div>
 
-      {/* Additional Metrics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Pipeline Performance */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-2 mb-6">
-            <Activity className="h-5 w-5 text-green-500" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-              Pipeline Performance
-            </h3>
+        {/* Analytics Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {analyticsStats.map((stat, index) => (
+            <StatCard key={index} {...stat} />
+          ))}
+        </div>
+
+        {/* Main Charts */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          {/* Revenue Chart */}
+          <div className={`${currentTheme.background.card} rounded-2xl p-6 shadow-lg border ${currentTheme.border.card}`}>
+            <div className="flex items-center gap-2 mb-6">
+              <BarChart3 className="h-5 w-5 text-blue-500" />
+              <h3 className={`text-xl font-semibold ${currentTheme.text.primary}`}>
+                Revenue Trends
+              </h3>
+            </div>
+            <RevenueChart />
           </div>
-          <div className="space-y-4">
-            {stagePerformance.map((stage, index) => {
-              const percentage = totalValue > 0 ? Math.round((stage.value / totalValue) * 100) : 0
-              return (
-                <div key={index} className="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-300 group">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 group-hover:scale-125 transition-transform duration-300" />
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">
-                        {stage.name}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {stage.count} {stage.count === 1 ? 'opportunity' : 'opportunities'}
-                      </p>
+          
+          {/* Sales Funnel */}
+          <div className={`${currentTheme.background.card} rounded-2xl p-6 shadow-lg border ${currentTheme.border.card}`}>
+            <div className="flex items-center gap-2 mb-6">
+              <PieChart className="h-5 w-5 text-purple-500" />
+              <h3 className={`text-xl font-semibold ${currentTheme.text.primary}`}>
+                Sales Funnel
+              </h3>
+            </div>
+            <SalesFunnel />
+          </div>
+        </div>
+
+        {/* Additional Metrics */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Pipeline Performance */}
+          <div className="lg:col-span-2">
+            <div className={`${currentTheme.background.card} rounded-2xl p-6 shadow-lg border ${currentTheme.border.card}`}>
+              <div className="flex items-center gap-2 mb-6">
+                <Activity className="h-5 w-5 text-green-500" />
+                <h3 className={`text-xl font-semibold ${currentTheme.text.primary}`}>
+                  Pipeline Performance
+                </h3>
+              </div>
+              <div className="space-y-4">
+                {stagePerformance.map((stage, index) => {
+                  const percentage = totalValue > 0 ? Math.round((stage.value / totalValue) * 100) : 0
+                  return (
+                    <div key={index} className={`flex items-center justify-between p-4 rounded-xl border ${currentTheme.border.metric} hover:${currentTheme.background.metric} transition-all duration-300 group`}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 group-hover:scale-125 transition-transform duration-300" />
+                        <div>
+                          <p className={`font-semibold ${currentTheme.text.primary}`}>
+                            {stage.name}
+                          </p>
+                          <p className={`text-sm ${currentTheme.text.secondary}`}>
+                            {stage.count} {stage.count === 1 ? 'opportunity' : 'opportunities'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-bold ${currentTheme.text.primary}`}>
+                          ${(stage.value / 1000).toFixed(0)}K
+                        </p>
+                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                          {percentage}%
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-900 dark:text-white">
-                      ${(stage.value / 1000).toFixed(0)}K
-                    </p>
-                    <p className="text-sm font-medium text-primary-600 dark:text-primary-400">
-                      {percentage}%
-                    </p>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Performance Summary */}
-        <div className="space-y-8">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center gap-2 mb-6">
-              <Target className="h-5 w-5 text-orange-500" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Performance Summary
-              </h3>
-            </div>
-            <div className="space-y-5">
-              <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
-                <div className="flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">Win Rate</span>
-                </div>
-                <span className="font-bold text-green-600 dark:text-green-400 text-lg">
-                  {winRate}%
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">Revenue </span>
-                </div>
-                <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">
-                  ${(totalPipelineValue / 1000).toFixed(0)}K
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">Active Deals</span>
-                </div>
-                <span className="font-bold text-purple-600 dark:text-purple-400 text-lg">
-                  {activeOpportunities}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">Tasks Completed</span>
-                </div>
-                <span className="font-bold text-orange-600 dark:text-orange-400 text-lg">
-                  {completedTasks}
-                </span>
+                  )
+                })}
               </div>
             </div>
           </div>
 
-          {/* Quick Insights */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center gap-2 mb-6">
-              <BarChart3 className="h-5 w-5 text-indigo-500" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Quick Insights
-              </h3>
+          {/* Performance Summary & Quick Insights */}
+          <div className="space-y-8">
+            {/* Performance Summary */}
+            <div className={`${currentTheme.background.card} rounded-2xl p-6 shadow-lg border ${currentTheme.border.card}`}>
+              <div className="flex items-center gap-2 mb-6">
+                <Target className="h-5 w-5 text-orange-500" />
+                <h3 className={`text-xl font-semibold ${currentTheme.text.primary}`}>
+                  Performance Summary
+                </h3>
+              </div>
+              <div className="space-y-5">
+                {/* Win Rate */}
+                <div className={`flex justify-between items-center p-3 rounded-lg border ${getMetricBorder('green')} bg-gradient-to-r ${getMetricGradient('green')}`}>
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    <span className={`${currentTheme.text.secondary} font-medium`}>Win Rate</span>
+                  </div>
+                  <span className="font-bold text-green-600 dark:text-green-400 text-lg">
+                    {winRate}%
+                  </span>
+                </div>
+
+                {/* Revenue */}
+                <div className={`flex justify-between items-center p-3 rounded-lg border ${getMetricBorder('blue')} bg-gradient-to-r ${getMetricGradient('blue')}`}>
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className={`${currentTheme.text.secondary} font-medium`}>Revenue</span>
+                  </div>
+                  <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">
+                    ${(totalPipelineValue / 1000).toFixed(0)}K
+                  </span>
+                </div>
+
+                {/* Active Deals */}
+                <div className={`flex justify-between items-center p-3 rounded-lg border ${getMetricBorder('purple')} bg-gradient-to-r ${getMetricGradient('purple')}`}>
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    <span className={`${currentTheme.text.secondary} font-medium`}>Active Deals</span>
+                  </div>
+                  <span className="font-bold text-purple-600 dark:text-purple-400 text-lg">
+                    {activeOpportunities}
+                  </span>
+                </div>
+
+                {/* Tasks Completed */}
+                <div className={`flex justify-between items-center p-3 rounded-lg border ${getMetricBorder('orange')} bg-gradient-to-r ${getMetricGradient('orange')}`}>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                    <span className={`${currentTheme.text.secondary} font-medium`}>Tasks Completed</span>
+                  </div>
+                  <span className="font-bold text-orange-600 dark:text-orange-400 text-lg">
+                    {completedTasks}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="space-y-4">
-              <div className="p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800">
-                <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-200">
-                  Conversion Health
-                </p>
-                <p className="text-xs text-indigo-700 dark:text-indigo-400 mt-1">
-                  {winRate >= 30 ? 'Excellent' : winRate >= 20 ? 'Good' : 'Needs Improvement'}
-                </p>
-              </div>
 
-              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800">
-                <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-                  Pipeline Strength
-                </p>
-                <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
-                  {totalPipelineValue >= 100000 ? 'Strong' : 'Growing'} pipeline
-                </p>
+            {/* Quick Insights */}
+            <div className={`${currentTheme.background.card} rounded-2xl p-6 shadow-lg border ${currentTheme.border.card}`}>
+              <div className="flex items-center gap-2 mb-6">
+                <BarChart3 className="h-5 w-5 text-indigo-500" />
+                <h3 className={`text-xl font-semibold ${currentTheme.text.primary}`}>
+                  Quick Insights
+                </h3>
               </div>
+              <div className="space-y-4">
+                {/* Conversion Health */}
+                <div className={`p-3 rounded-lg border ${getMetricBorder('indigo')} bg-gradient-to-r ${getMetricGradient('indigo')}`}>
+                  <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-200">
+                    Conversion Health
+                  </p>
+                  <p className="text-xs text-indigo-700 dark:text-indigo-400 mt-1">
+                    {winRate >= 30 ? 'Excellent' : winRate >= 20 ? 'Good' : 'Needs Improvement'}
+                  </p>
+                </div>
 
-              <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800">
-                <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
-                  Activity Level
-                </p>
-                <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-1">
-                  {completedTasks >= 10 ? 'Highly Active' : 'Moderate'} performance
-                </p>
+                {/* Pipeline Strength */}
+                <div className={`p-3 rounded-lg border ${getMetricBorder('amber')} bg-gradient-to-r ${getMetricGradient('amber')}`}>
+                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                    Pipeline Strength
+                  </p>
+                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                    {totalPipelineValue >= 100000 ? 'Strong' : 'Growing'} pipeline
+                  </p>
+                </div>
+
+                {/* Activity Level */}
+                <div className={`p-3 rounded-lg border ${getMetricBorder('emerald')} bg-gradient-to-r ${getMetricGradient('emerald')}`}>
+                  <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
+                    Activity Level
+                  </p>
+                  <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-1">
+                    {completedTasks >= 10 ? 'Highly Active' : 'Moderate'} performance
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -269,4 +337,4 @@ const AnalyticsPage = () => {
   )
 }
 
-export default AnalyticsPage  
+export default AnalyticsPage

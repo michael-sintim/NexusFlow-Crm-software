@@ -1,10 +1,46 @@
 import React, { useEffect, useState } from 'react'
 import { CalendarDays, Clock, AlertCircle } from 'lucide-react'
+import { useUIStore } from '../store/uiStore'
 
 const Reminders = () => {
+  const { theme } = useUIStore()
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  // Theme-based styles
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        secondary: 'bg-gray-50'
+      },
+      border: {
+        primary: 'border-gray-200'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        tertiary: 'text-gray-500'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800',
+        secondary: 'bg-gray-700/50'
+      },
+      border: {
+        primary: 'border-gray-700'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-300',
+        tertiary: 'text-gray-400'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
 
   useEffect(() => {
     const fetchUpcomingTasks = async () => {
@@ -26,19 +62,19 @@ const Reminders = () => {
   }, [])
 
   return (
-    <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+    <div className={`lg:col-span-2 ${currentTheme.background.primary} rounded-xl p-6 shadow-sm border ${currentTheme.border.primary}`}>
+      <h3 className={`text-lg font-semibold ${currentTheme.text.primary} mb-4`}>
         Reminders
       </h3>
 
       {/* Loading State */}
       {loading && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading reminders...</p>
+        <p className={`text-sm ${currentTheme.text.tertiary}`}>Loading reminders...</p>
       )}
 
       {/* Error State */}
       {error && (
-        <div className="flex items-center text-red-600 dark:text-red-400 text-sm">
+        <div className={`flex items-center text-red-600 dark:text-red-400 text-sm`}>
           <AlertCircle className="h-4 w-4 mr-2" />
           {error}
         </div>
@@ -46,9 +82,9 @@ const Reminders = () => {
 
       {/* Empty State */}
       {!loading && !error && tasks.length === 0 && (
-        <div className="flex items-center text-gray-500 dark:text-gray-400 text-sm">
+        <div className={`flex items-center ${currentTheme.text.tertiary} text-sm`}>
           <AlertCircle className="h-4 w-4 mr-2" />
-          No upcoming tasks — you’re all caught up 🎉
+          No upcoming tasks — you're all caught up 🎉
         </div>
       )}
 
@@ -58,17 +94,17 @@ const Reminders = () => {
           {tasks.map((task) => (
             <div
               key={task.id}
-              className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              className={`flex items-center space-x-3 p-3 rounded-lg hover:${currentTheme.background.secondary} transition-colors`}
             >
-              <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
-                <CalendarDays className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+              <div className={`w-8 h-8 ${theme === 'light' ? 'bg-primary-100' : 'bg-primary-900/30'} rounded-full flex items-center justify-center`}>
+                <CalendarDays className={`h-4 w-4 ${theme === 'light' ? 'text-primary-600' : 'text-primary-400'}`} />
               </div>
 
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <p className={`text-sm font-medium ${currentTheme.text.primary}`}>
                   {task.title}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                <p className={`text-xs ${currentTheme.text.tertiary} flex items-center`}>
                   <Clock className="h-3 w-3 mr-1" />
                   Due {new Date(task.due_date).toLocaleString()}
                 </p>

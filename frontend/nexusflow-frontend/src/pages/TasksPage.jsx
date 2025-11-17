@@ -1,20 +1,61 @@
 import React from 'react'
 import { Plus, Filter, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react'
 import { useDataStore } from '../store/dataStore'
+import { useUIStore } from '../store/uiStore'
 import TaskList from '../components/tasks/TaskList'
 import Button from '../components/ui/Button'
 import { useNavigate } from 'react-router-dom'
 
 const TasksPage = () => {
+  const { theme } = useUIStore()
   const { tasks, fetchTasks, isLoading } = useDataStore()
   const [filter, setFilter] = React.useState('all')
   const navigate = useNavigate()
+
+  // Theme-based styles
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        secondary: 'bg-gray-50',
+        page: 'bg-gray-50',
+        stat: 'bg-white'
+      },
+      border: {
+        primary: 'border-gray-200',
+        secondary: 'border-gray-300'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        tertiary: 'text-gray-500'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800',
+        secondary: 'bg-gray-700/50',
+        page: 'bg-gray-900',
+        stat: 'bg-gray-800'
+      },
+      border: {
+        primary: 'border-gray-700',
+        secondary: 'border-gray-600'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-300',
+        tertiary: 'text-gray-400'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
 
   React.useEffect(() => {
     fetchTasks()
   }, [fetchTasks])
 
-  // Safely handle tasks data
   const tasksArray = React.useMemo(() => {
     if (!tasks) return []
     if (Array.isArray(tasks)) return tasks
@@ -28,7 +69,6 @@ const TasksPage = () => {
     return task.status === filter
   })
 
-  // Calculate task statistics
   const taskStats = {
     total: tasksArray.length,
     open: tasksArray.filter(t => t.status === 'open').length,
@@ -42,16 +82,16 @@ const TasksPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className={`min-h-screen ${currentTheme.background.page} p-6`}>
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Loading Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-64 mb-2"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-48"></div>
+              <div className={`h-8 ${theme === 'light' ? 'bg-gray-200' : 'bg-gray-700'} rounded w-64 mb-2`}></div>
+              <div className={`h-4 ${theme === 'light' ? 'bg-gray-200' : 'bg-gray-700'} rounded w-48`}></div>
             </div>
             <div className="animate-pulse">
-              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+              <div className={`h-10 ${theme === 'light' ? 'bg-gray-200' : 'bg-gray-700'} rounded w-32`}></div>
             </div>
           </div>
           
@@ -59,7 +99,7 @@ const TasksPage = () => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map(n => (
               <div key={n} className="animate-pulse">
-                <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                <div className={`h-24 ${theme === 'light' ? 'bg-gray-200' : 'bg-gray-700'} rounded-xl`}></div>
               </div>
             ))}
           </div>
@@ -68,7 +108,7 @@ const TasksPage = () => {
           <div className="space-y-4">
             {[1, 2, 3].map(n => (
               <div key={n} className="animate-pulse">
-                <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                <div className={`h-20 ${theme === 'light' ? 'bg-gray-200' : 'bg-gray-700'} rounded-xl`}></div>
               </div>
             ))}
           </div>
@@ -78,15 +118,15 @@ const TasksPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className={`min-h-screen ${currentTheme.background.page} p-6`}>
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           <div className="mb-6 lg:mb-0">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
+            <h1 className={`text-4xl font-bold ${currentTheme.text.primary} mb-3`}>
               Tasks
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400">
+            <p className={`text-lg ${currentTheme.text.secondary}`}>
               Manage your tasks, deadlines, and reminders in one place
             </p>
           </div>
@@ -95,7 +135,7 @@ const TasksPage = () => {
             onClick={() => navigate('/tasks/new')}
             className="w-full lg:w-auto cursor-pointer px-8 bg-blue-500 py-3 hover:bg-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
           >
-            <Plus className="h-5 w-5 mr-2 " />
+            <Plus className="h-5 w-5 mr-2" />
             Add New Task
           </Button>
         </div>
@@ -103,68 +143,68 @@ const TasksPage = () => {
         {/* Task Statistics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Total Tasks */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-300">
+          <div className={`${currentTheme.background.stat} rounded-2xl p-6 shadow-sm border ${currentTheme.border.primary} hover:shadow-md transition-all duration-300`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Tasks</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{taskStats.total}</p>
+                <p className={`text-sm font-medium ${currentTheme.text.secondary} mb-1`}>Total Tasks</p>
+                <p className={`text-3xl font-bold ${currentTheme.text.primary}`}>{taskStats.total}</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
-                <Filter className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className={`w-12 h-12 ${theme === 'light' ? 'bg-blue-100' : 'bg-blue-900/30'} rounded-xl flex items-center justify-center`}>
+                <Filter className={`h-6 w-6 ${theme === 'light' ? 'text-blue-600' : 'text-blue-400'}`} />
               </div>
             </div>
           </div>
 
           {/* Open Tasks */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-300">
+          <div className={`${currentTheme.background.stat} rounded-2xl p-6 shadow-sm border ${currentTheme.border.primary} hover:shadow-md transition-all duration-300`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Open</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{taskStats.open}</p>
+                <p className={`text-sm font-medium ${currentTheme.text.secondary} mb-1`}>Open</p>
+                <p className={`text-3xl font-bold ${currentTheme.text.primary}`}>{taskStats.open}</p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
-                <Clock className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              <div className={`w-12 h-12 ${theme === 'light' ? 'bg-orange-100' : 'bg-orange-900/30'} rounded-xl flex items-center justify-center`}>
+                <Clock className={`h-6 w-6 ${theme === 'light' ? 'text-orange-600' : 'text-orange-400'}`} />
               </div>
             </div>
           </div>
 
           {/* In Progress */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-300">
+          <div className={`${currentTheme.background.stat} rounded-2xl p-6 shadow-sm border ${currentTheme.border.primary} hover:shadow-md transition-all duration-300`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">In Progress</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{taskStats.in_progress}</p>
+                <p className={`text-sm font-medium ${currentTheme.text.secondary} mb-1`}>In Progress</p>
+                <p className={`text-3xl font-bold ${currentTheme.text.primary}`}>{taskStats.in_progress}</p>
               </div>
-              <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center">
-                <AlertCircle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+              <div className={`w-12 h-12 ${theme === 'light' ? 'bg-yellow-100' : 'bg-yellow-900/30'} rounded-xl flex items-center justify-center`}>
+                <AlertCircle className={`h-6 w-6 ${theme === 'light' ? 'text-yellow-600' : 'text-yellow-400'}`} />
               </div>
             </div>
           </div>
 
           {/* Completed */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-300">
+          <div className={`${currentTheme.background.stat} rounded-2xl p-6 shadow-sm border ${currentTheme.border.primary} hover:shadow-md transition-all duration-300`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Completed</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{taskStats.completed}</p>
+                <p className={`text-sm font-medium ${currentTheme.text.secondary} mb-1`}>Completed</p>
+                <p className={`text-3xl font-bold ${currentTheme.text.primary}`}>{taskStats.completed}</p>
               </div>
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+              <div className={`w-12 h-12 ${theme === 'light' ? 'bg-green-100' : 'bg-green-900/30'} rounded-xl flex items-center justify-center`}>
+                <CheckCircle className={`h-6 w-6 ${theme === 'light' ? 'text-green-600' : 'text-green-400'}`} />
               </div>
             </div>
           </div>
         </div>
 
         {/* Filters and Content */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className={`${currentTheme.background.primary} rounded-2xl shadow-sm border ${currentTheme.border.primary} overflow-hidden`}>
           {/* Filters Header */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className={`p-6 border-b ${currentTheme.border.primary}`}>
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
               <div className="mb-4 lg:mb-0">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className={`text-lg font-semibold ${currentTheme.text.primary} mb-2`}>
                   Your Tasks
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className={currentTheme.text.secondary}>
                   {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''} found
                   {taskStats.overdue > 0 && (
                     <span className="text-red-600 dark:text-red-400 font-medium ml-2">
@@ -183,7 +223,7 @@ const TasksPage = () => {
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       filter === status
                         ? 'bg-primary-500 text-white shadow-md'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:shadow-sm'
+                        : `${theme === 'light' ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'} hover:shadow-sm`
                     }`}
                   >
                     {status === 'all' ? 'All Tasks' : status.split('_').map(word => 
