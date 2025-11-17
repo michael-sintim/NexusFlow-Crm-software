@@ -157,17 +157,18 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Your frontend URL
     "http://127.0.0.1:3000",
-    'http://41.74.81.68:8000',
-    'http://41.74.81.68:3000',
+    'http://41.74.81.172:8000',
+    'http://41.74.81.172:3000',
 ]
 
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    'http://41.74.81.68:8000',
-    'http://41.74.81.68:3000',
+    "http://127.0.0.1:3000",  
+    'http://41.74.81.172:8000',
+    'http://41.74.81.172:3000',
+
 ]
 
 # Channels (local setup)
