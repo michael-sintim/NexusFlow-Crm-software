@@ -2,11 +2,14 @@ import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Edit, Mail, Phone, Building, Calendar, User, Globe, FileText, Trash2 } from 'lucide-react'
 import { useDataStore } from '../../store/dataStore'
+import { useUIStore } from '../../store/uiStore'
 import Button from '../ui/Button'
+import { cn } from '../../lib/utils'
 
 const ContactDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { theme } = useUIStore()
   const { 
     currentContact, 
     fetchContact, 
@@ -19,6 +22,44 @@ const ContactDetailPage = () => {
   const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
+
+  // Theme-based styles
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        secondary: 'bg-gray-50',
+        page: 'bg-gray-50'
+      },
+      border: {
+        primary: 'border-gray-200',
+        secondary: 'border-gray-300'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        tertiary: 'text-gray-500'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800',
+        secondary: 'bg-gray-750',
+        page: 'bg-gray-900'
+      },
+      border: {
+        primary: 'border-gray-700',
+        secondary: 'border-gray-600'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-300',
+        tertiary: 'text-gray-400'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
 
   React.useEffect(() => {
     const loadContact = async () => {
@@ -38,7 +79,6 @@ const ContactDetailPage = () => {
       loadContact()
     }
 
-    // Clear current contact when component unmounts
     return () => {
       clearCurrentContact()
     }
@@ -67,7 +107,10 @@ const ContactDetailPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <div className={cn(
+        "min-h-screen py-8",
+        currentTheme.background.page
+      )}>
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center space-x-4 mb-6">
             <Button
@@ -78,23 +121,45 @@ const ContactDetailPage = () => {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Contacts
             </Button>
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 animate-pulse"></div>
+            <div className={cn(
+              "h-8 rounded w-48 animate-pulse",
+              theme === 'light' ? 'bg-gray-200' : 'bg-gray-700'
+            )}></div>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 animate-pulse">
+          <div className={cn(
+            "rounded-xl shadow-sm border p-8 animate-pulse",
+            currentTheme.background.primary,
+            currentTheme.border.primary
+          )}>
             <div className="flex items-center space-x-6 mb-8">
-              <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+              <div className={cn(
+                "w-20 h-20 rounded-full",
+                theme === 'light' ? 'bg-gray-200' : 'bg-gray-700'
+              )}></div>
               <div className="space-y-2 flex-1">
-                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-64"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                <div className={cn(
+                  "h-6 rounded w-64",
+                  theme === 'light' ? 'bg-gray-200' : 'bg-gray-700'
+                )}></div>
+                <div className={cn(
+                  "h-4 rounded w-32",
+                  theme === 'light' ? 'bg-gray-200' : 'bg-gray-700'
+                )}></div>
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[1, 2, 3, 4, 5, 6].map(n => (
                 <div key={n} className="space-y-2">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                  <div className={cn(
+                    "h-4 rounded w-24",
+                    theme === 'light' ? 'bg-gray-200' : 'bg-gray-700'
+                  )}></div>
+                  <div className={cn(
+                    "h-6 rounded w-full",
+                    theme === 'light' ? 'bg-gray-200' : 'bg-gray-700'
+                  )}></div>
                 </div>
               ))}
             </div>
@@ -106,7 +171,10 @@ const ContactDetailPage = () => {
 
   if (error || !currentContact) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <div className={cn(
+        "min-h-screen py-8",
+        currentTheme.background.page
+      )}>
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <Button
             variant="outline"
@@ -117,14 +185,31 @@ const ContactDetailPage = () => {
             Back to Contacts
           </Button>
           
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-8 text-center">
-            <div className="w-16 h-16 bg-red-100 dark:bg-red-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="h-8 w-8 text-red-600 dark:text-red-400" />
+          <div className={cn(
+            "border rounded-xl p-8 text-center",
+            theme === 'light'
+              ? "bg-red-50 border-red-200"
+              : "bg-red-900/20 border-red-800"
+          )}>
+            <div className={cn(
+              "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4",
+              theme === 'light' ? 'bg-red-100' : 'bg-red-800'
+            )}>
+              <User className={cn(
+                "h-8 w-8",
+                theme === 'light' ? 'text-red-600' : 'text-red-400'
+              )} />
             </div>
-            <h3 className="text-xl font-semibold text-red-800 dark:text-red-400 mb-2">
+            <h3 className={cn(
+              "text-xl font-semibold mb-2",
+              theme === 'light' ? 'text-red-800' : 'text-red-400'
+            )}>
               {error || 'Contact Not Found'}
             </h3>
-            <p className="text-red-600 dark:text-red-300 mb-6">
+            <p className={cn(
+              "mb-6",
+              theme === 'light' ? 'text-red-600' : 'text-red-300'
+            )}>
               {error ? error : 'The contact you are looking for does not exist or has been deleted.'}
             </p>
             <Button onClick={() => navigate('/contacts')}>
@@ -144,7 +229,10 @@ const ContactDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className={cn(
+      "min-h-screen py-8",
+      currentTheme.background.page
+    )}>
       <div className="w-full px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -157,10 +245,16 @@ const ContactDetailPage = () => {
               Back to Contacts
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white">
+              <h1 className={cn(
+                "text-3xl font-bold text-center",
+                currentTheme.text.primary
+              )}>
                 Contact Details
               </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
+              <p className={cn(
+                "mt-1",
+                currentTheme.text.secondary
+              )}>
                 Viewing information for {fullName}
               </p>
             </div>
@@ -171,7 +265,11 @@ const ContactDetailPage = () => {
               variant="outline"
               onClick={handleDelete}
               disabled={isDeleting || contactsLoading}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
+              className={cn(
+                theme === 'light'
+                  ? "text-red-600 hover:text-red-700 hover:bg-red-50"
+                  : "text-red-400 hover:text-red-300 hover:bg-red-900/20"
+              )}
             >
               <Trash2 className="h-4 w-4 mr-2" />
               {isDeleting ? 'Deleting...' : 'Delete Contact'}
@@ -186,7 +284,11 @@ const ContactDetailPage = () => {
         </div>
 
         {/* Contact Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className={cn(
+          "rounded-xl shadow-sm border overflow-hidden",
+          currentTheme.background.primary,
+          currentTheme.border.primary
+        )}>
           {/* Header with Avatar */}
           <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-6">
             <div className="flex items-center space-x-6">
@@ -211,23 +313,44 @@ const ContactDetailPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Personal Information */}
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                <h3 className={cn(
+                  "text-lg font-semibold flex items-center",
+                  currentTheme.text.primary
+                )}>
                   <User className="h-5 w-5 mr-2 text-blue-500" />
                   Personal Information
                 </h3>
                 
                 <div className="space-y-4">
-                  <div className="flex justify-between items-start py-3 border-b border-gray-200 dark:border-gray-700">
-                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Full Name</span>
-                    <span className="text-sm text-gray-900 dark:text-white text-right">
+                  <div className={cn(
+                    "flex justify-between items-start py-3 border-b",
+                    currentTheme.border.primary
+                  )}>
+                    <span className={cn(
+                      "text-sm font-medium",
+                      currentTheme.text.tertiary
+                    )}>Full Name</span>
+                    <span className={cn(
+                      "text-sm text-right",
+                      currentTheme.text.primary
+                    )}>
                       {fullName}
                     </span>
                   </div>
                   
-                  <div className="flex justify-between items-start py-3 border-b border-gray-200 dark:border-gray-700">
-                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</span>
+                  <div className={cn(
+                    "flex justify-between items-start py-3 border-b",
+                    currentTheme.border.primary
+                  )}>
+                    <span className={cn(
+                      "text-sm font-medium",
+                      currentTheme.text.tertiary
+                    )}>Email</span>
                     <div className="text-right">
-                      <div className="flex items-center justify-end space-x-2 text-sm text-gray-900 dark:text-white">
+                      <div className={cn(
+                        "flex items-center justify-end space-x-2 text-sm",
+                        currentTheme.text.primary
+                      )}>
                         <Mail className="h-4 w-4" />
                         <span>{currentContact.email}</span>
                       </div>
@@ -235,10 +358,19 @@ const ContactDetailPage = () => {
                   </div>
                   
                   {currentContact.phone_number && (
-                    <div className="flex justify-between items-start py-3 border-b border-gray-200 dark:border-gray-700">
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</span>
+                    <div className={cn(
+                      "flex justify-between items-start py-3 border-b",
+                      currentTheme.border.primary
+                    )}>
+                      <span className={cn(
+                        "text-sm font-medium",
+                        currentTheme.text.tertiary
+                      )}>Phone</span>
                       <div className="text-right">
-                        <div className="flex items-center justify-end space-x-2 text-sm text-gray-900 dark:text-white">
+                        <div className={cn(
+                          "flex items-center justify-end space-x-2 text-sm",
+                          currentTheme.text.primary
+                        )}>
                           <Phone className="h-4 w-4" />
                           <span>{currentContact.phone_number}</span>
                         </div>
@@ -250,17 +382,29 @@ const ContactDetailPage = () => {
 
               {/* Professional Information */}
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                <h3 className={cn(
+                  "text-lg font-semibold flex items-center",
+                  currentTheme.text.primary
+                )}>
                   <Building className="h-5 w-5 mr-2 text-blue-500" />
                   Professional Information
                 </h3>
                 
                 <div className="space-y-4">
                   {currentContact.company_name && (
-                    <div className="flex justify-between items-start py-3 border-b border-gray-200 dark:border-gray-700">
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Company</span>
+                    <div className={cn(
+                      "flex justify-between items-start py-3 border-b",
+                      currentTheme.border.primary
+                    )}>
+                      <span className={cn(
+                        "text-sm font-medium",
+                        currentTheme.text.tertiary
+                      )}>Company</span>
                       <div className="text-right">
-                        <div className="flex items-center justify-end space-x-2 text-sm text-gray-900 dark:text-white">
+                        <div className={cn(
+                          "flex items-center justify-end space-x-2 text-sm",
+                          currentTheme.text.primary
+                        )}>
                           <Building className="h-4 w-4" />
                           <span>{currentContact.company_name}</span>
                         </div>
@@ -269,16 +413,34 @@ const ContactDetailPage = () => {
                   )}
                   
                   {currentContact.title && (
-                    <div className="flex justify-between items-start py-3 border-b border-gray-200 dark:border-gray-700">
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Job Title</span>
-                      <span className="text-sm text-gray-900 dark:text-white">{currentContact.title}</span>
+                    <div className={cn(
+                      "flex justify-between items-start py-3 border-b",
+                      currentTheme.border.primary
+                    )}>
+                      <span className={cn(
+                        "text-sm font-medium",
+                        currentTheme.text.tertiary
+                      )}>Job Title</span>
+                      <span className={cn(
+                        "text-sm",
+                        currentTheme.text.primary
+                      )}>{currentContact.title}</span>
                     </div>
                   )}
                   
-                  <div className="flex justify-between items-start py-3 border-b border-gray-200 dark:border-gray-700">
-                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Source</span>
+                  <div className={cn(
+                    "flex justify-between items-start py-3 border-b",
+                    currentTheme.border.primary
+                  )}>
+                    <span className={cn(
+                      "text-sm font-medium",
+                      currentTheme.text.tertiary
+                    )}>Source</span>
                     <div className="text-right">
-                      <div className="flex items-center justify-end space-x-2 text-sm text-gray-900 dark:text-white">
+                      <div className={cn(
+                        "flex items-center justify-end space-x-2 text-sm",
+                        currentTheme.text.primary
+                      )}>
                         <Globe className="h-4 w-4" />
                         <span className="capitalize">{formatSource(currentContact.source)}</span>
                       </div>
@@ -290,13 +452,25 @@ const ContactDetailPage = () => {
 
             {/* Notes Section */}
             {currentContact.notes && (
-              <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center mb-4">
+              <div className={cn(
+                "mt-8 pt-8 border-t",
+                currentTheme.border.primary
+              )}>
+                <h3 className={cn(
+                  "text-lg font-semibold flex items-center mb-4",
+                  currentTheme.text.primary
+                )}>
                   <FileText className="h-5 w-5 mr-2 text-blue-500" />
                   Notes
                 </h3>
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                <div className={cn(
+                  "rounded-lg p-4",
+                  theme === 'light' ? 'bg-gray-50' : 'bg-gray-700'
+                )}>
+                  <p className={cn(
+                    "whitespace-pre-wrap",
+                    theme === 'light' ? 'text-gray-700' : 'text-gray-300'
+                  )}>
                     {currentContact.notes}
                   </p>
                 </div>
@@ -304,14 +478,23 @@ const ContactDetailPage = () => {
             )}
 
             {/* Metadata */}
-            <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activity</h3>
+            <div className={cn(
+              "mt-8 pt-8 border-t",
+              currentTheme.border.primary
+            )}>
+              <h3 className={cn(
+                "text-lg font-semibold mb-4",
+                currentTheme.text.primary
+              )}>Activity</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                <div className={cn(
+                  "flex items-center space-x-2",
+                  currentTheme.text.tertiary
+                )}>
                   <Calendar className="h-4 w-4" />
                   <div>
                     <div className="font-medium">Last Contacted</div>
-                    <div className="text-gray-900 dark:text-white">
+                    <div className={currentTheme.text.primary}>
                       {currentContact.last_contacted 
                         ? new Date(currentContact.last_contacted).toLocaleDateString('en-US', {
                             year: 'numeric',
@@ -324,11 +507,14 @@ const ContactDetailPage = () => {
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                <div className={cn(
+                  "flex items-center space-x-2",
+                  currentTheme.text.tertiary
+                )}>
                   <Calendar className="h-4 w-4" />
                   <div>
                     <div className="font-medium">Created</div>
-                    <div className="text-gray-900 dark:text-white">
+                    <div className={currentTheme.text.primary}>
                       {new Date(currentContact.created_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -338,11 +524,14 @@ const ContactDetailPage = () => {
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                <div className={cn(
+                  "flex items-center space-x-2",
+                  currentTheme.text.tertiary
+                )}>
                   <Calendar className="h-4 w-4" />
                   <div>
                     <div className="font-medium">Last Updated</div>
-                    <div className="text-gray-900 dark:text-white">
+                    <div className={currentTheme.text.primary}>
                       {new Date(currentContact.updated_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
