@@ -1,9 +1,8 @@
-// src/components/pipeline/KanbanBoard.jsx
 import React, { useState, useEffect } from 'react'
 import { useDataStore } from '../../store/dataStore'
+import { useUIStore } from '../../store/uiStore'
 import { contactsAPI } from '../../services/api'
 import { MoreHorizontal, User, Building, DollarSign, Edit, Trash2, Eye, ArrowLeft, X, FileText, Calendar, Target } from 'lucide-react'
-
 
 // Match these with your Django backend STAGE_CHOICES
 const DEAL_STAGES = [
@@ -15,19 +14,17 @@ const DEAL_STAGES = [
   { id: 'closed_lost', name: 'Closed Lost', color: 'bg-red-500', textColor: 'text-red-700' }
 ]
 
-// Format numbers in hundreds (K) format for cards// Format numbers to show exact figures without rounding
+// Format numbers to show exact figures without rounding
 const formatNumber = (value) => {
   if (!value && value !== 0) return '$0'
   
   const numValue = parseFloat(value)
   if (isNaN(numValue)) return '$0'
   
-  // Show exact amount with commas for thousands
   return `$${numValue.toLocaleString('en-US', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
   })}`
-
 }
 
 // Format exact amount for details modal
@@ -37,7 +34,6 @@ const formatExactAmount = (value) => {
   const numValue = parseFloat(value)
   if (isNaN(numValue)) return '$0.00'
   
-  // Format with commas for thousands and 2 decimal places
   return `$${numValue.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
@@ -46,29 +42,66 @@ const formatExactAmount = (value) => {
 
 // Delete Confirmation Modal
 const DeleteConfirmationModal = ({ opportunity, onClose, onConfirm }) => {
+  const { theme } = useUIStore()
+  
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        error: 'bg-red-50'
+      },
+      border: {
+        primary: 'border-gray-200',
+        error: 'border-red-200'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        error: 'text-red-800'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800',
+        error: 'bg-red-900/20'
+      },
+      border: {
+        primary: 'border-gray-700',
+        error: 'border-red-800'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-400',
+        error: 'text-red-400'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
+
   if (!opportunity) return null
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
+      <div className={`${currentTheme.background.primary} rounded-lg max-w-md w-full`}>
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-full">
+            <div className={`p-2 ${theme === 'light' ? 'bg-red-100' : 'bg-red-900/20'} rounded-full`}>
               <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 className={`text-lg font-semibold ${currentTheme.text.primary}`}>
               Delete Opportunity
             </h3>
           </div>
           
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className={`${currentTheme.text.secondary} mb-6`}>
             Are you sure you want to delete <strong>"{opportunity.title || 'Unnamed Opportunity'}"</strong>? This action cannot be undone.
           </p>
 
           <div className="flex justify-end space-x-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className={`px-4 py-2 text-sm font-medium ${currentTheme.text.secondary} hover:${theme === 'light' ? 'bg-gray-100' : 'bg-gray-700'} rounded-lg transition-colors`}
             >
               Cancel
             </button>
@@ -87,6 +120,7 @@ const DeleteConfirmationModal = ({ opportunity, onClose, onConfirm }) => {
 
 // Edit Opportunity Modal
 const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
+  const { theme } = useUIStore()
   const [formData, setFormData] = useState({
     title: opportunity?.title || '',
     contact: opportunity?.contact?.id || '',
@@ -99,13 +133,51 @@ const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
   const [errors, setErrors] = useState({})
   const [saving, setSaving] = useState(false)
 
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        input: 'bg-white'
+      },
+      border: {
+        primary: 'border-gray-200',
+        secondary: 'border-gray-300',
+        error: 'border-red-500'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        label: 'text-gray-700',
+        error: 'text-red-600'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800',
+        input: 'bg-gray-700'
+      },
+      border: {
+        primary: 'border-gray-700',
+        secondary: 'border-gray-600',
+        error: 'border-red-500'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-400',
+        label: 'text-gray-300',
+        error: 'text-red-400'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
+
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
       [name]: value
     }))
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -177,21 +249,21 @@ const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className={`${currentTheme.background.primary} rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className={`flex items-center justify-between p-6 border-b ${currentTheme.border.primary}`}>
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg transition-colors"
+              className={`p-1 ${currentTheme.text.secondary} hover:${currentTheme.text.primary} rounded-lg transition-colors`}
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 className={`text-xl font-semibold ${currentTheme.text.primary}`}>
                 Edit Opportunity
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className={`text-sm ${currentTheme.text.secondary} mt-1`}>
                 Update opportunity information
               </p>
             </div>
@@ -201,20 +273,20 @@ const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {errors.submit && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-red-600 dark:text-red-400 text-sm">{errors.submit}</p>
+            <div className={`p-4 ${theme === 'light' ? 'bg-red-50' : 'bg-red-900/20'} border ${theme === 'light' ? 'border-red-200' : 'border-red-800'} rounded-lg`}>
+              <p className={`${currentTheme.text.error} text-sm`}>{errors.submit}</p>
             </div>
           )}
 
           {/* Basic Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+            <h3 className={`text-lg font-semibold ${currentTheme.text.primary} flex items-center`}>
               <FileText className="h-5 w-5 mr-2 text-blue-500" />
               Opportunity Details
             </h3>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className={`block text-sm font-medium ${currentTheme.text.label} mb-2`}>
                 Opportunity Title *
               </label>
               <input
@@ -222,19 +294,19 @@ const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
-                  errors.title ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                className={`w-full px-3 py-2 border rounded-lg ${currentTheme.background.input} ${currentTheme.text.primary} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
+                  errors.title ? currentTheme.border.error : currentTheme.border.secondary
                 }`}
                 placeholder="Enter opportunity title"
               />
               {errors.title && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.title}</p>
+                <p className={`${currentTheme.text.error} text-sm mt-1`}>{errors.title}</p>
               )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                <label className={`block text-sm font-medium ${currentTheme.text.label} mb-2 flex items-center`}>
                   <User className="h-4 w-4 mr-2 text-gray-400" />
                   Contact *
                 </label>
@@ -242,8 +314,8 @@ const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
                   name="contact"
                   value={formData.contact}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
-                    errors.contact ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  className={`w-full px-3 py-2 border rounded-lg ${currentTheme.background.input} ${currentTheme.text.primary} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
+                    errors.contact ? currentTheme.border.error : currentTheme.border.secondary
                   }`}
                 >
                   <option value="">Select a contact</option>
@@ -255,12 +327,12 @@ const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
                   ))}
                 </select>
                 {errors.contact && (
-                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.contact}</p>
+                  <p className={`${currentTheme.text.error} text-sm mt-1`}>{errors.contact}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                <label className={`block text-sm font-medium ${currentTheme.text.label} mb-2 flex items-center`}>
                   <Target className="h-4 w-4 mr-2 text-gray-400" />
                   Stage *
                 </label>
@@ -268,8 +340,8 @@ const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
                   name="stage"
                   value={formData.stage}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
-                    errors.stage ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  className={`w-full px-3 py-2 border rounded-lg ${currentTheme.background.input} ${currentTheme.text.primary} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
+                    errors.stage ? currentTheme.border.error : currentTheme.border.secondary
                   }`}
                 >
                   {stageOptions.map(option => (
@@ -279,7 +351,7 @@ const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
                   ))}
                 </select>
                 {errors.stage && (
-                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.stage}</p>
+                  <p className={`${currentTheme.text.error} text-sm mt-1`}>{errors.stage}</p>
                 )}
               </div>
             </div>
@@ -287,13 +359,13 @@ const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
 
           {/* Financial Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+            <h3 className={`text-lg font-semibold ${currentTheme.text.primary} flex items-center`}>
               <DollarSign className="h-5 w-5 mr-2 text-green-500" />
               Financial Details
             </h3>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className={`block text-sm font-medium ${currentTheme.text.label} mb-2`}>
                 Value *
               </label>
               <input
@@ -302,26 +374,26 @@ const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
                 name="value"
                 value={formData.value}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
-                  errors.value ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                className={`w-full px-3 py-2 border rounded-lg ${currentTheme.background.input} ${currentTheme.text.primary} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
+                  errors.value ? currentTheme.border.error : currentTheme.border.secondary
                 }`}
                 placeholder="0.00"
               />
               {errors.value && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.value}</p>
+                <p className={`${currentTheme.text.error} text-sm mt-1`}>{errors.value}</p>
               )}
             </div>
           </div>
 
           {/* Timeline */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+            <h3 className={`text-lg font-semibold ${currentTheme.text.primary} flex items-center`}>
               <Calendar className="h-5 w-5 mr-2 text-orange-500" />
               Timeline
             </h3>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className={`block text-sm font-medium ${currentTheme.text.label} mb-2`}>
                 Expected Close Date
               </label>
               <input
@@ -329,25 +401,25 @@ const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
                 name="expected_close_date"
                 value={formData.expected_close_date}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
-                  errors.expected_close_date ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                className={`w-full px-3 py-2 border rounded-lg ${currentTheme.background.input} ${currentTheme.text.primary} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
+                  errors.expected_close_date ? currentTheme.border.error : currentTheme.border.secondary
                 }`}
               />
               {errors.expected_close_date && (
-                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.expected_close_date}</p>
+                <p className={`${currentTheme.text.error} text-sm mt-1`}>{errors.expected_close_date}</p>
               )}
             </div>
           </div>
 
           {/* Additional Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+            <h3 className={`text-lg font-semibold ${currentTheme.text.primary} flex items-center`}>
               <FileText className="h-5 w-5 mr-2 text-purple-500" />
               Additional Information
             </h3>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className={`block text-sm font-medium ${currentTheme.text.label} mb-2`}>
                 Description
               </label>
               <textarea
@@ -355,19 +427,19 @@ const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors duration-200 placeholder-gray-500 dark:placeholder-gray-400"
+                className={`w-full px-3 py-2 border ${currentTheme.border.secondary} rounded-lg ${currentTheme.background.input} ${currentTheme.text.primary} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-colors duration-200 placeholder-gray-500 dark:placeholder-gray-400`}
                 placeholder="Describe this opportunity, including key requirements, decision makers, and any specific details..."
               />
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className={`flex justify-end space-x-3 pt-6 border-t ${currentTheme.border.primary}`}>
             <button
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className={`px-4 py-2 text-sm font-medium ${currentTheme.text.secondary} hover:${theme === 'light' ? 'bg-gray-50' : 'bg-gray-700'} rounded-lg transition-colors`}
             >
               Cancel
             </button>
@@ -385,29 +457,62 @@ const EditOpportunityModal = ({ opportunity, onClose, onSave, contacts }) => {
   )
 }
 
-// Opportunity Details Modal (without probability, with exact amount)
+// Opportunity Details Modal
 const OpportunityDetailsModal = ({ opportunity, onClose, onEdit, onDelete }) => {
+  const { theme } = useUIStore()
+  
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white'
+      },
+      border: {
+        primary: 'border-gray-200'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        tertiary: 'text-gray-500'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800'
+      },
+      border: {
+        primary: 'border-gray-700'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-300',
+        tertiary: 'text-gray-400'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
+
   if (!opportunity) return null
 
   const stage = DEAL_STAGES.find(s => s.id === opportunity.stage)
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className={`${currentTheme.background.primary} rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className={`flex items-center justify-between p-6 border-b ${currentTheme.border.primary}`}>
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg transition-colors"
+              className={`p-1 ${currentTheme.text.secondary} hover:${currentTheme.text.primary} rounded-lg transition-colors`}
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 className={`text-xl font-semibold ${currentTheme.text.primary}`}>
                 Opportunity Details
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className={`text-sm ${currentTheme.text.secondary} mt-1`}>
                 View and manage opportunity information
               </p>
             </div>
@@ -418,31 +523,31 @@ const OpportunityDetailsModal = ({ opportunity, onClose, onEdit, onDelete }) => 
         <div className="p-6 space-y-6">
           {/* Basic Information */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+            <h3 className={`text-lg font-medium ${currentTheme.text.primary} mb-4`}>
               Basic Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className={`block text-sm font-medium ${currentTheme.text.secondary} mb-1`}>
                   Opportunity Title
                 </label>
-                <p className="text-gray-900 dark:text-white font-medium">
+                <p className={`${currentTheme.text.primary} font-medium`}>
                   {opportunity.title || 'Unnamed Opportunity'}
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className={`block text-sm font-medium ${currentTheme.text.secondary} mb-1`}>
                   Stage
                 </label>
                 <div className="flex items-center gap-2">
                   <div className={`w-3 h-3 rounded-full ${stage?.color}`} />
-                  <span className="text-gray-900 dark:text-white font-medium">
+                  <span className={`${currentTheme.text.primary} font-medium`}>
                     {stage?.name}
                   </span>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className={`block text-sm font-medium ${currentTheme.text.secondary} mb-1`}>
                   Value
                 </label>
                 <p className="text-green-600 dark:text-green-400 font-semibold">
@@ -451,10 +556,10 @@ const OpportunityDetailsModal = ({ opportunity, onClose, onEdit, onDelete }) => 
               </div>
               {opportunity.expected_close_date && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className={`block text-sm font-medium ${currentTheme.text.secondary} mb-1`}>
                     Expected Close Date
                   </label>
-                  <p className="text-gray-900 dark:text-white">
+                  <p className={currentTheme.text.primary}>
                     {new Date(opportunity.expected_close_date).toLocaleDateString()}
                   </p>
                 </div>
@@ -465,42 +570,42 @@ const OpportunityDetailsModal = ({ opportunity, onClose, onEdit, onDelete }) => 
           {/* Contact Information */}
           {opportunity.contact && (
             <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              <h3 className={`text-lg font-medium ${currentTheme.text.primary} mb-4`}>
                 Contact Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className={`block text-sm font-medium ${currentTheme.text.secondary} mb-1`}>
                     Company
                   </label>
-                  <p className="text-gray-900 dark:text-white">
+                  <p className={currentTheme.text.primary}>
                     {opportunity.contact.company_name || 'No company'}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className={`block text-sm font-medium ${currentTheme.text.secondary} mb-1`}>
                     Contact Person
                   </label>
-                  <p className="text-gray-900 dark:text-white">
+                  <p className={currentTheme.text.primary}>
                     {opportunity.contact.first_name} {opportunity.contact.last_name}
                   </p>
                 </div>
                 {opportunity.contact.email && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className={`block text-sm font-medium ${currentTheme.text.secondary} mb-1`}>
                       Email
                     </label>
-                    <p className="text-gray-900 dark:text-white">
+                    <p className={currentTheme.text.primary}>
                       {opportunity.contact.email}
                     </p>
                   </div>
                 )}
                 {opportunity.contact.phone_number && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className={`block text-sm font-medium ${currentTheme.text.secondary} mb-1`}>
                       Phone
                     </label>
-                    <p className="text-gray-900 dark:text-white">
+                    <p className={currentTheme.text.primary}>
                       {opportunity.contact.phone_number}
                     </p>
                   </div>
@@ -512,18 +617,18 @@ const OpportunityDetailsModal = ({ opportunity, onClose, onEdit, onDelete }) => 
           {/* Description */}
           {opportunity.description && (
             <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              <h3 className={`text-lg font-medium ${currentTheme.text.primary} mb-4`}>
                 Description
               </h3>
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+              <p className={`${currentTheme.text.secondary} whitespace-pre-wrap`}>
                 {opportunity.description}
               </p>
             </div>
           )}
 
           {/* Timestamps */}
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-500 dark:text-gray-400">
+          <div className={`border-t ${currentTheme.border.primary} pt-4`}>
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 text-sm ${currentTheme.text.tertiary}`}>
               <div>
                 <span>Created: </span>
                 <span>{new Date(opportunity.created_at).toLocaleDateString()}</span>
@@ -537,7 +642,7 @@ const OpportunityDetailsModal = ({ opportunity, onClose, onEdit, onDelete }) => 
         </div>
 
         {/* Footer Actions */}
-        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700">
+        <div className={`flex justify-end space-x-3 p-6 border-t ${currentTheme.border.primary}`}>
           <button
             onClick={onDelete}
             className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-2"
@@ -560,8 +665,44 @@ const OpportunityDetailsModal = ({ opportunity, onClose, onEdit, onDelete }) => 
 
 // Opportunity Card Component
 const OpportunityCard = ({ opportunity, onView, onEdit, onDelete }) => {
+  const { theme } = useUIStore()
   const stage = DEAL_STAGES.find(s => s.id === opportunity.stage)
   const [showActions, setShowActions] = useState(false)
+  
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        secondary: 'bg-gray-100',
+        hover: 'hover:bg-gray-50'
+      },
+      border: {
+        primary: 'border-gray-200'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        tertiary: 'text-gray-500'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-700',
+        secondary: 'bg-gray-600',
+        hover: 'hover:bg-gray-600'
+      },
+      border: {
+        primary: 'border-gray-600'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-300',
+        tertiary: 'text-gray-400'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
   
   const opportunityName = opportunity.title || 'Unnamed Opportunity'
   const companyName = opportunity.contact?.company_name || 'No company'
@@ -578,12 +719,12 @@ const OpportunityCard = ({ opportunity, onView, onEdit, onDelete }) => {
     <div
       draggable
       onDragStart={handleDragStart}
-      className="bg-white dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-md transition-all cursor-pointer group mb-3"
+      className={`${currentTheme.background.primary} rounded-lg p-3 border ${currentTheme.border.primary} shadow-sm ${currentTheme.background.hover} transition-all cursor-pointer group mb-3`}
     >
       <div className="flex items-start justify-between mb-2">
         <h4 
           onClick={() => onView(opportunity)}
-          className="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm line-clamp-1 cursor-pointer flex-1 mr-2"
+          className={`font-semibold ${currentTheme.text.primary} hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm line-clamp-1 cursor-pointer flex-1 mr-2`}
         >
           {opportunityName}
         </h4>
@@ -597,13 +738,13 @@ const OpportunityCard = ({ opportunity, onView, onEdit, onDelete }) => {
           
           {/* Action Dropdown */}
           {showActions && (
-            <div className="absolute right-0 top-6 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
+            <div className={`absolute right-0 top-6 w-48 ${theme === 'light' ? 'bg-white' : 'bg-gray-800'} border ${currentTheme.border.primary} rounded-lg shadow-lg z-10`}>
               <button
                 onClick={() => {
                   onView(opportunity)
                   setShowActions(false)
                 }}
-                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className={`flex items-center w-full px-3 py-2 text-sm ${currentTheme.text.secondary} hover:${currentTheme.background.secondary}`}
               >
                 <Eye className="h-4 w-4 mr-2" />
                 View Details
@@ -613,7 +754,7 @@ const OpportunityCard = ({ opportunity, onView, onEdit, onDelete }) => {
                   onEdit(opportunity)
                   setShowActions(false)
                 }}
-                className="flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className={`flex items-center w-full px-3 py-2 text-sm ${currentTheme.text.secondary} hover:${currentTheme.background.secondary}`}
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
@@ -623,7 +764,7 @@ const OpportunityCard = ({ opportunity, onView, onEdit, onDelete }) => {
                   onDelete(opportunity)
                   setShowActions(false)
                 }}
-                className="flex items-center w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className={`flex items-center w-full px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:${theme === 'light' ? 'bg-red-50' : 'bg-red-900/20'}`}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
@@ -634,12 +775,12 @@ const OpportunityCard = ({ opportunity, onView, onEdit, onDelete }) => {
       </div>
       
       <div className="space-y-1.5">
-        <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+        <div className={`flex items-center gap-1.5 text-xs ${currentTheme.text.secondary}`}>
           <Building className="h-3 w-3 flex-shrink-0" />
           <span className="truncate">{companyName}</span>
         </div>
         
-        <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+        <div className={`flex items-center gap-1.5 text-xs ${currentTheme.text.secondary}`}>
           <User className="h-3 w-3 flex-shrink-0" />
           <span className="truncate">{contactName}</span>
         </div>
@@ -652,10 +793,10 @@ const OpportunityCard = ({ opportunity, onView, onEdit, onDelete }) => {
         )}
       </div>
       
-      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-600">
+      <div className={`flex items-center justify-between mt-2 pt-2 border-t ${theme === 'light' ? 'border-gray-100' : 'border-gray-600'}`}>
         <div className="flex items-center gap-1.5">
           <div className={`w-2 h-2 rounded-full ${stage?.color}`} />
-          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{stage?.name}</span>
+          <span className={`text-xs ${currentTheme.text.tertiary} truncate`}>{stage?.name}</span>
         </div>
       </div>
     </div>
@@ -664,8 +805,44 @@ const OpportunityCard = ({ opportunity, onView, onEdit, onDelete }) => {
 
 // Stage Column Component
 const StageColumn = ({ stage, opportunities, onView, onEdit, onDelete }) => {
+  const { theme } = useUIStore()
   const { updateOpportunityStage } = useDataStore()
   const stageOpportunities = opportunities.filter(opp => opp.stage === stage.id)
+
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        empty: 'bg-gray-50'
+      },
+      border: {
+        primary: 'border-gray-200',
+        empty: 'border-gray-200'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        empty: 'text-gray-400'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800',
+        empty: 'bg-gray-700/50'
+      },
+      border: {
+        primary: 'border-gray-700',
+        empty: 'border-gray-600'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-300',
+        empty: 'text-gray-500'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
 
   const stageMetrics = React.useMemo(() => {
     const totalValue = stageOpportunities.reduce((sum, opp) => sum + (parseFloat(opp.value) || 0), 0)
@@ -727,7 +904,7 @@ const StageColumn = ({ stage, opportunities, onView, onEdit, onDelete }) => {
       {/* Opportunities List */}
       <div className="flex-1 overflow-y-auto space-y-2">
         {stageOpportunities.length === 0 ? (
-          <div className="text-center py-6 text-gray-400 dark:text-gray-500 text-xs border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg h-24 flex items-center justify-center">
+          <div className={`text-center py-6 ${currentTheme.text.empty} text-xs border-2 border-dashed ${currentTheme.border.empty} rounded-lg h-24 flex items-center justify-center`}>
             Drop opportunities here
           </div>
         ) : (
@@ -748,6 +925,7 @@ const StageColumn = ({ stage, opportunities, onView, onEdit, onDelete }) => {
 
 // Main Kanban Board Component
 const KanbanBoard = ({ opportunities, onContactClick }) => {
+  const { theme } = useUIStore()
   const { deleteOpportunity, updateOpportunity } = useDataStore()
   const [selectedOpportunity, setSelectedOpportunity] = useState(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
@@ -756,6 +934,21 @@ const KanbanBoard = ({ opportunities, onContactClick }) => {
   const [opportunityToDelete, setOpportunityToDelete] = useState(null)
   const [contacts, setContacts] = useState([])
   const [loadingContacts, setLoadingContacts] = useState(false)
+
+  const themeStyles = {
+    light: {
+      background: {
+        page: 'bg-gray-50'
+      }
+    },
+    dark: {
+      background: {
+        page: 'bg-gray-900'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
 
   // Fetch contacts from API like the OpportunityForm component
   useEffect(() => {

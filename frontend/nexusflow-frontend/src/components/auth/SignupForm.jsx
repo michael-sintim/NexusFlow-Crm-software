@@ -1,11 +1,13 @@
 import React from 'react'
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { useUIStore } from '../../store/uiStore'
 import { useNavigate } from 'react-router-dom'
 import Input from '../ui/Input'
 import Button from '../ui/Button'
 
 const SignupForm = () => {
+  const { theme } = useUIStore()
   const { register, isLoading, error, clearError } = useAuth()
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = React.useState(false)
@@ -17,6 +19,43 @@ const SignupForm = () => {
     password: '',
     password2: ''
   })
+
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        page: 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50',
+        error: 'bg-red-50'
+      },
+      border: {
+        primary: 'border-gray-200',
+        error: 'border-red-200'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        error: 'text-red-600'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800',
+        page: 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900',
+        error: 'bg-red-900/20'
+      },
+      border: {
+        primary: 'border-gray-700',
+        error: 'border-red-800'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-400',
+        error: 'text-red-400'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
 
   // Clear errors when form data changes
   React.useEffect(() => {
@@ -125,25 +164,25 @@ const SignupForm = () => {
   const errorMessage = getErrorMessage()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
+    <div className={`min-h-screen ${currentTheme.background.page} flex items-center justify-center p-4`}>
       <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
+        <div className={`${currentTheme.background.primary} rounded-2xl shadow-xl border ${currentTheme.border.primary} p-8`}>
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-purple-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <span className="text-white font-bold text-2xl">NF</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className={`text-3xl font-bold ${currentTheme.text.primary} mb-2`}>
               Create account
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className={currentTheme.text.secondary}>
               Get started with NexusFlow CRM
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {errorMessage && (
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-red-600 dark:text-red-400 text-sm font-medium">
+              <div className={`p-4 ${currentTheme.background.error} border ${currentTheme.border.error} rounded-lg`}>
+                <p className={`${currentTheme.text.error} text-sm font-medium`}>
                   {errorMessage}
                 </p>
               </div>
@@ -160,6 +199,7 @@ const SignupForm = () => {
                 placeholder="First name"
                 leftIcon={<User className="h-4 w-4 text-gray-400" />}
                 error={formErrors.first_name}
+                theme={theme}
               />
               <Input
                 label="Last Name"
@@ -170,6 +210,7 @@ const SignupForm = () => {
                 required
                 placeholder="Last name"
                 error={formErrors.last_name}
+                theme={theme}
               />
             </div>
 
@@ -183,6 +224,7 @@ const SignupForm = () => {
               placeholder="Enter your email"
               leftIcon={<Mail className="h-4 w-4 text-gray-400" />}
               error={formErrors.email}
+              theme={theme}
             />
 
             <div className="relative">
@@ -196,6 +238,7 @@ const SignupForm = () => {
                 placeholder="Create a password"
                 leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
                 error={formErrors.password}
+                theme={theme}
               />
               <button
                 type="button"
@@ -216,20 +259,21 @@ const SignupForm = () => {
               placeholder="Confirm your password"
               leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
               error={formErrors.password2}
+              theme={theme}
             />
 
             <Button
               type="submit"
               loading={isLoading}
               disabled={isLoading}
-              className="w-full bg-purple-700 cursor-pointer   hover:bg-purple-800 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full bg-purple-700 cursor-pointer hover:bg-purple-800 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               size="lg"
             >
               {isLoading ? 'Creating Account...' : 'Create Account'}
             </Button>
 
             <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className={currentTheme.text.secondary}>
                 Already have an account?{' '}
                 <button
                   type="button"
@@ -246,8 +290,8 @@ const SignupForm = () => {
 
       {/* Background decoration */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-40 -right-32 w-80 h-80 bg-blue-200 dark:bg-blue-900 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-purple-200 dark:bg-purple-900 rounded-full blur-3xl opacity-30"></div>
+        <div className={`absolute -top-40 -right-32 w-80 h-80 ${theme === 'light' ? 'bg-blue-200' : 'bg-blue-900'} rounded-full blur-3xl opacity-30`}></div>
+        <div className={`absolute -bottom-40 -left-32 w-80 h-80 ${theme === 'light' ? 'bg-purple-200' : 'bg-purple-900'} rounded-full blur-3xl opacity-30`}></div>
       </div>
     </div>
   )

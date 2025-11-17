@@ -1,18 +1,57 @@
 import React from 'react'
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { useUIStore } from '../../store/uiStore'
 import { useNavigate } from 'react-router-dom'
 import Input from '../ui/Input'
 import Button from '../ui/Button'
 
 const LoginForm = () => {
+  const { theme } = useUIStore()
   const { login, isLoading, error } = useAuth()
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = React.useState(false)
   const [formData, setFormData] = React.useState({
-    email: '', // CHANGED BACK to 'email' to match your backend
+    email: '',
     password: ''
   })
+
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        page: 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50',
+        error: 'bg-red-50'
+      },
+      border: {
+        primary: 'border-gray-200',
+        error: 'border-red-200'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        error: 'text-red-600'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800',
+        page: 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900',
+        error: 'bg-red-900/20'
+      },
+      border: {
+        primary: 'border-gray-700',
+        error: 'border-red-800'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-400',
+        error: 'text-red-400'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -91,35 +130,36 @@ const LoginForm = () => {
   return (
     <div className="h-dvh flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
+        <div className={`${currentTheme.background.primary} rounded-2xl shadow-xl border ${currentTheme.border.primary} p-8`}>
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-purple-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <span className="text-white font-bold text-2xl">NF</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className={`text-3xl font-bold ${currentTheme.text.primary} mb-2`}>
               Welcome back
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className={currentTheme.text.secondary}>
               Sign in to your NexusFlow account
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+              <div className={`p-4 ${currentTheme.background.error} border ${currentTheme.border.error} rounded-lg`}>
+                <p className={`${currentTheme.text.error} text-sm`}>{error}</p>
               </div>
             )}
 
             <Input
-              label="Email" // CHANGED BACK to "Email"
-              type="email" // CHANGED BACK to "email"
-              name="email" // CHANGED BACK to "email"
+              label="Email"
+              type="email"
+              name="email"
               value={formData.email}
               onChange={handleChange}
               required
               placeholder="Enter your email"
-              leftIcon={<Mail className="h-4 w-4 text-gray-400" />} // CHANGED BACK to Mail icon
+              leftIcon={<Mail className="h-4 w-4 text-gray-400" />}
+              theme={theme}
             />
 
             <div className="relative">
@@ -132,6 +172,7 @@ const LoginForm = () => {
                 required
                 placeholder="Enter your password"
                 leftIcon={<Lock className="h-4 w-4 text-gray-400" />}
+                theme={theme}
               />
               <button
                 type="button"
@@ -152,7 +193,7 @@ const LoginForm = () => {
             </Button>
 
             <div className="text-center">
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className={currentTheme.text.secondary}>
                 Don't have an account?{' '}
                 <button
                   type="button"

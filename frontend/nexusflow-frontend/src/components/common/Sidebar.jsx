@@ -10,27 +10,65 @@ import {
   Calendar,
   Clock,
 } from 'lucide-react'
+import { useUIStore } from '../../store/uiStore'
 import { cn } from '../../lib/utils'
 
 const Sidebar = () => {
+  const { theme } = useUIStore()
+
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        secondary: 'bg-gray-50',
+        gradient: 'from-primary-50 to-blue-50'
+      },
+      border: {
+        primary: 'border-gray-200'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        tertiary: 'text-gray-500'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800',
+        secondary: 'bg-gray-700',
+        gradient: 'from-gray-700 to-gray-800'
+      },
+      border: {
+        primary: 'border-gray-700'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-400',
+        tertiary: 'text-gray-500'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
+
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Customers', href: '/contacts', icon: Users },
     { name: 'Revenue', href: '/pipeline', icon: TrendingUp },
-  { name: 'Tasks', href: '/tasks', icon: CheckSquare },
-  { name: 'Calendar', href: '/calendar', icon: Calendar },
+    { name: 'Tasks', href: '/tasks', icon: CheckSquare },
+    { name: 'Calendar', href: '/calendar', icon: Calendar },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     { name: 'Settings', href: '/settings', icon: Settings },
   ]
 
   return (
-    <div className="fixed inset-y-0 py-2 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+    <div className={`fixed inset-y-0 py-2 left-0 z-50 w-64 ${currentTheme.background.primary} border-r ${currentTheme.border.primary} flex flex-col`}>
       {/* Logo */}
-      <div className="flex items-center space-x-3 p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="w-8 h-8  bg-purple-700 rounded-lg flex items-center justify-center">
+      <div className={`flex items-center space-x-3 p-4 border-b ${currentTheme.border.primary}`}>
+        <div className="w-8 h-8 bg-purple-700 rounded-lg flex items-center justify-center">
           <span className="text-white font-bold text-sm">NF</span>
         </div>
-        <span className="text-xl font-bold text-gray-900 dark:text-white">
+        <span className={`text-xl font-bold ${currentTheme.text.primary}`}>
           NexusFlow
         </span>
       </div>
@@ -46,7 +84,7 @@ const Sidebar = () => {
                 "flex items-center px-3 py-3 rounded-lg transition-colors group",
                 isActive
                   ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white"
+                  : `${currentTheme.text.secondary} hover:${theme === 'light' ? 'bg-gray-50' : 'bg-gray-700/50'} hover:${currentTheme.text.primary}`
               )
             }
           >
@@ -59,18 +97,18 @@ const Sidebar = () => {
       </nav>
 
       {/* Quick Calendar Stats */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="bg-gradient-to-r from-primary-50 to-blue-50 dark:from-gray-700 dark:to-gray-800 rounded-lg p-3">
+      <div className={`p-4 border-t ${currentTheme.border.primary}`}>
+        <div className={`bg-gradient-to-r ${currentTheme.background.gradient} rounded-lg p-3`}>
           <div className="flex items-center space-x-2 mb-2">
             <Calendar className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-            <span className="text-sm font-medium text-gray-900 dark:text-white">
+            <span className={`text-sm font-medium ${currentTheme.text.primary}`}>
               Today
             </span>
           </div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+          <div className={`text-2xl font-bold ${currentTheme.text.primary} mb-1`}>
             {new Date().getDate()}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
+          <div className={`text-xs ${currentTheme.text.tertiary}`}>
             {new Date().toLocaleDateString('en-US', { 
               weekday: 'long', 
               month: 'long', 
