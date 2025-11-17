@@ -2,7 +2,7 @@ import React from 'react'
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import ViewSwitcher from './ViewSwitcher'
 import CalendarFilters from './CalendarFilter'
-
+import { useUIStore } from '../store/uiStore'
 
 const CalendarToolbar = ({ 
   currentView, 
@@ -11,6 +11,44 @@ const CalendarToolbar = ({
   onDateChange, 
   onCreateEvent 
 }) => {
+  const { theme } = useUIStore()
+
+  // Theme-based styles
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        secondary: 'bg-gray-50'
+      },
+      border: {
+        primary: 'border-gray-200',
+        secondary: 'border-gray-300'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600',
+        tertiary: 'text-gray-500'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-800',
+        secondary: 'bg-gray-750'
+      },
+      border: {
+        primary: 'border-gray-700',
+        secondary: 'border-gray-600'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-300',
+        tertiary: 'text-gray-400'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
+
   const navigate = (action) => {
     let newDate = new Date(currentDate)
     
@@ -59,12 +97,12 @@ const CalendarToolbar = ({
   }
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+    <div className={`flex items-center justify-between p-4 border-b ${currentTheme.border.primary} ${currentTheme.background.primary}`}>
       {/* Left Section - Navigation */}
       <div className="flex items-center space-x-4">
         <button
           onClick={() => navigate('TODAY')}
-          className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+          className={`px-4 py-2 text-sm font-medium ${currentTheme.text.secondary} ${currentTheme.background.primary} border ${currentTheme.border.secondary} rounded-lg hover:${currentTheme.background.secondary} transition-colors`}
         >
           Today
         </button>
@@ -72,19 +110,19 @@ const CalendarToolbar = ({
         <div className="flex items-center space-x-2">
           <button
             onClick={() => navigate('PREV')}
-            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className={`p-2 ${currentTheme.text.tertiary} hover:${currentTheme.text.primary} hover:${currentTheme.background.secondary} rounded-lg transition-colors`}
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             onClick={() => navigate('NEXT')}
-            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className={`p-2 ${currentTheme.text.tertiary} hover:${currentTheme.text.primary} hover:${currentTheme.background.secondary} rounded-lg transition-colors`}
           >
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
         
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white min-w-[200px]">
+        <h2 className={`text-xl font-semibold ${currentTheme.text.primary} min-w-[200px]`}>
           {formatDate()}
         </h2>
       </div>
@@ -103,7 +141,7 @@ const CalendarToolbar = ({
         
         <button
           onClick={onCreateEvent}
-          className="flex items-center space-x-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
         >
           <Plus className="h-4 w-4" />
           <span className="text-sm font-medium">New Event</span>

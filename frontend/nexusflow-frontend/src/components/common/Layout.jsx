@@ -1,6 +1,6 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
-import { useUIStore } from '../store/uiStore'
+import { useUIStore } from '../../store/uiStore'
 import Sidebar from './Sidebar'
 import Header from './Header'
 

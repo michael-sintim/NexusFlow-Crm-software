@@ -2,10 +2,39 @@ import React from 'react'
 import { Calendar, momentLocalizer } from 'react-big-calendar'
 import moment from 'moment'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
+import { useUIStore } from '../store/uiStore'
 
 const localizer = momentLocalizer(moment)
 
 const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, events = [] }) => {
+  const { theme } = useUIStore()
+
+  // Theme-based styles
+  const themeStyles = {
+    light: {
+      background: {
+        primary: 'bg-white',
+        page: 'bg-gray-50'
+      },
+      text: {
+        primary: 'text-gray-900',
+        secondary: 'text-gray-600'
+      }
+    },
+    dark: {
+      background: {
+        primary: 'bg-gray-900',
+        page: 'bg-gray-900'
+      },
+      text: {
+        primary: 'text-white',
+        secondary: 'text-gray-300'
+      }
+    }
+  }
+
+  const currentTheme = themeStyles[theme]
+
   // Safe events handling - ensure events is always an array
   const safeEvents = React.useMemo(() => {
     if (!events || !Array.isArray(events)) {
@@ -86,7 +115,7 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, eve
     if (currentDate.getTime() === today.getTime()) {
       return {
         style: {
-          backgroundColor: 'rgba(59, 130, 246, 0.1)'
+          backgroundColor: theme === 'light' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.2)'
         }
       }
     }
@@ -98,7 +127,7 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, eve
     if (hours < 9 || hours > 17) {
       return {
         style: {
-          backgroundColor: 'rgba(0, 0, 0, 0.02)'
+          backgroundColor: theme === 'light' ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.02)'
         }
       }
     }
@@ -120,7 +149,7 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, eve
   }
 
   return (
-    <div className="h-full bg-white dark:bg-gray-900">
+    <div className={`h-full ${currentTheme.background.primary}`}>
       <Calendar
         localizer={localizer}
         events={calendarEvents}
@@ -155,8 +184,8 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, eve
         .rbc-custom-calendar .rbc-header {
           padding: 0.5rem 0.25rem;
           font-weight: 600;
-          color: #111827;
-          border-bottom: 1px solid #e5e7eb;
+          color: ${theme === 'light' ? '#111827' : '#f9fafb'};
+          border-bottom: 1px solid ${theme === 'light' ? '#e5e7eb' : '#374151'};
         }
 
         .rbc-custom-calendar .rbc-date-cell {
@@ -175,23 +204,23 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, eve
         }
 
         .rbc-custom-calendar .rbc-today {
-          background-color: rgba(59, 130, 246, 0.1);
+          background-color: ${theme === 'light' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.2)'};
         }
 
         .rbc-custom-calendar .rbc-off-range-bg {
-          background-color: #f9fafb;
+          background-color: ${theme === 'light' ? '#f9fafb' : '#1f2937'};
         }
 
         .rbc-custom-calendar .rbc-off-range {
-          color: #9ca3af;
+          color: ${theme === 'light' ? '#9ca3af' : '#6b7280'};
         }
 
         .rbc-custom-calendar .rbc-button-link {
-          color: #111827;
+          color: ${theme === 'light' ? '#111827' : '#f9fafb'};
         }
 
         .rbc-custom-calendar .rbc-button-link:hover {
-          color: #2563eb;
+          color: ${theme === 'light' ? '#2563eb' : '#60a5fa'};
         }
 
         .rbc-custom-calendar .rbc-toolbar {
@@ -201,81 +230,29 @@ const CalendarView = ({ currentView, currentDate, onEventClick, onSlotClick, eve
         .rbc-custom-calendar .rbc-toolbar-label {
           font-size: 1.125rem;
           font-weight: 600;
-          color: #111827;
+          color: ${theme === 'light' ? '#111827' : '#f9fafb'};
         }
 
         .rbc-custom-calendar .rbc-btn {
-          color: #4b5563;
+          color: ${theme === 'light' ? '#4b5563' : '#9ca3af'};
         }
 
         .rbc-custom-calendar .rbc-btn:hover {
-          color: #111827;
-          background-color: #f3f4f6;
+          color: ${theme === 'light' ? '#111827' : '#f9fafb'};
+          background-color: ${theme === 'light' ? '#f3f4f6' : '#374151'};
         }
 
         .rbc-custom-calendar .rbc-active {
-          background-color: #dbeafe;
-          color: #1e40af;
+          background-color: ${theme === 'light' ? '#dbeafe' : '#1e3a8a'};
+          color: ${theme === 'light' ? '#1e40af' : '#dbeafe'};
         }
 
         .rbc-custom-calendar .rbc-show-more {
-          color: #2563eb;
+          color: ${theme === 'light' ? '#2563eb' : '#60a5fa'};
         }
 
         .rbc-custom-calendar .rbc-show-more:hover {
-          color: #1d4ed8;
-        }
-
-        /* Dark mode styles */
-        .dark .rbc-custom-calendar .rbc-header {
-          color: #f9fafb;
-          border-bottom-color: #374151;
-        }
-
-        .dark .rbc-custom-calendar .rbc-today {
-          background-color: rgba(59, 130, 246, 0.2);
-        }
-
-        .dark .rbc-custom-calendar .rbc-off-range-bg {
-          background-color: #1f2937;
-        }
-
-        .dark .rbc-custom-calendar .rbc-off-range {
-          color: #6b7280;
-        }
-
-        .dark .rbc-custom-calendar .rbc-button-link {
-          color: #f9fafb;
-        }
-
-        .dark .rbc-custom-calendar .rbc-button-link:hover {
-          color: #60a5fa;
-        }
-
-        .dark .rbc-custom-calendar .rbc-toolbar-label {
-          color: #f9fafb;
-        }
-
-        .dark .rbc-custom-calendar .rbc-btn {
-          color: #9ca3af;
-        }
-
-        .dark .rbc-custom-calendar .rbc-btn:hover {
-          color: #f9fafb;
-          background-color: #374151;
-        }
-
-        .dark .rbc-custom-calendar .rbc-active {
-          background-color: #1e3a8a;
-          color: #dbeafe;
-        }
-
-        .dark .rbc-custom-calendar .rbc-show-more {
-          color: #60a5fa;
-        }
-
-        .dark .rbc-custom-calendar .rbc-show-more:hover {
-          color: #93c5fd;
+          color: ${theme === 'light' ? '#1d4ed8' : '#93c5fd'};
         }
       `}</style>
     </div>
