@@ -32,7 +32,7 @@ def contact_list(request):
                 Q(first_name__icontains=search) |
                 Q(last_name__icontains=search) |
                 Q(email__icontains=search) |
-                Q(company_name__icontains=search) |2222
+                Q(company_name__icontains=search) 
                 Q(phone_number__icontains=search)
             )
         
