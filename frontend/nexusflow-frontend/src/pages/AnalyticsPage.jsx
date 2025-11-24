@@ -29,21 +29,19 @@ const AnalyticsPage = () => {
 
   const { theme } = useUIStore()
 
-  React.useEffect(() => {
-    fetchDashboardData()
-    fetchPipelineData()
-  }, [fetchDashboardData, fetchPipelineData])
-
   // Theme-based styles
   const themeStyles = {
     light: {
       background: {
-        card: 'bg-white',
-        gradient: 'from-gray-50 to-gray-100',
-        metric: 'bg-gray-50'
+        primary: 'bg-white',
+        secondary: 'bg-gray-50',
+        page: 'bg-gray-50',
+        metric: 'bg-gray-50',
+        gradient: 'from-gray-50 to-gray-100'
       },
       border: {
-        card: 'border-gray-200',
+        primary: 'border-gray-200',
+        secondary: 'border-gray-300',
         metric: 'border-gray-200'
       },
       text: {
@@ -54,12 +52,15 @@ const AnalyticsPage = () => {
     },
     dark: {
       background: {
-        card: 'bg-gray-800',
-        gradient: 'from-gray-800 to-gray-900',
-        metric: 'bg-gray-700'
+        primary: 'bg-gray-800',
+        secondary: 'bg-gray-750',
+        page: 'bg-gray-900',
+        metric: 'bg-gray-700',
+        gradient: 'from-gray-800 to-gray-900'
       },
       border: {
-        card: 'border-gray-700',
+        primary: 'border-gray-700',
+        secondary: 'border-gray-600',
         metric: 'border-gray-600'
       },
       text: {
@@ -71,6 +72,11 @@ const AnalyticsPage = () => {
   }
 
   const currentTheme = themeStyles[theme]
+
+  React.useEffect(() => {
+    fetchDashboardData()
+    fetchPipelineData()
+  }, [fetchDashboardData, fetchPipelineData])
 
   // Calculate real metrics from data
   const totalOpportunities = opportunities?.length || 0
@@ -147,13 +153,14 @@ const AnalyticsPage = () => {
   }
 
   return (
-    <div className="min-h-dvh bg-gray-50 dark:bg-gray-900 p-6">
+    <div className={`min-h-screen ${currentTheme.background.page} p-6`}>
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center">
-          <h1 className={`text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent`}>
-            Analytics Dashboard
-          </h1>
+          <h1 className={`text-4xl font-bold bg-gradient-to-r text-center from-white to-gray-200 dark:from-white dark:to-gray-300 bg-clip-text text-transparent`}>
+ Analytics Dashboard
+</h1>
+
           <p className={`${currentTheme.text.secondary} mt-3 text-lg`}>
             Deep insights into your sales performance, trends, and key metrics
           </p>
@@ -169,25 +176,25 @@ const AnalyticsPage = () => {
         {/* Main Charts */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {/* Revenue Chart */}
-          <div className={`${currentTheme.background.card} rounded-2xl p-6 shadow-lg border ${currentTheme.border.card}`}>
+          <div className={`${currentTheme.background.primary} rounded-2xl p-6 shadow-lg border ${currentTheme.border.primary}`}>
             <div className="flex items-center gap-2 mb-6">
               <BarChart3 className="h-5 w-5 text-blue-500" />
               <h3 className={`text-xl font-semibold ${currentTheme.text.primary}`}>
                 Revenue Trends
               </h3>
             </div>
-            <RevenueChart />
+            <RevenueChart theme={theme} />
           </div>
           
           {/* Sales Funnel */}
-          <div className={`${currentTheme.background.card} rounded-2xl p-6 shadow-lg border ${currentTheme.border.card}`}>
+          <div className={`${currentTheme.background.primary} rounded-2xl p-6 shadow-lg border ${currentTheme.border.primary}`}>
             <div className="flex items-center gap-2 mb-6">
               <PieChart className="h-5 w-5 text-purple-500" />
               <h3 className={`text-xl font-semibold ${currentTheme.text.primary}`}>
                 Sales Funnel
               </h3>
             </div>
-            <SalesFunnel />
+            <SalesFunnel theme={theme} />
           </div>
         </div>
 
@@ -195,7 +202,7 @@ const AnalyticsPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Pipeline Performance */}
           <div className="lg:col-span-2">
-            <div className={`${currentTheme.background.card} rounded-2xl p-6 shadow-lg border ${currentTheme.border.card}`}>
+            <div className={`${currentTheme.background.primary} rounded-2xl p-6 shadow-lg border ${currentTheme.border.primary}`}>
               <div className="flex items-center gap-2 mb-6">
                 <Activity className="h-5 w-5 text-green-500" />
                 <h3 className={`text-xl font-semibold ${currentTheme.text.primary}`}>
@@ -236,7 +243,7 @@ const AnalyticsPage = () => {
           {/* Performance Summary & Quick Insights */}
           <div className="space-y-8">
             {/* Performance Summary */}
-            <div className={`${currentTheme.background.card} rounded-2xl p-6 shadow-lg border ${currentTheme.border.card}`}>
+            <div className={`${currentTheme.background.primary} rounded-2xl p-6 shadow-lg border ${currentTheme.border.primary}`}>
               <div className="flex items-center gap-2 mb-6">
                 <Target className="h-5 w-5 text-orange-500" />
                 <h3 className={`text-xl font-semibold ${currentTheme.text.primary}`}>
@@ -291,7 +298,7 @@ const AnalyticsPage = () => {
             </div>
 
             {/* Quick Insights */}
-            <div className={`${currentTheme.background.card} rounded-2xl p-6 shadow-lg border ${currentTheme.border.card}`}>
+            <div className={`${currentTheme.background.primary} rounded-2xl p-6 shadow-lg border ${currentTheme.border.primary}`}>
               <div className="flex items-center gap-2 mb-6">
                 <BarChart3 className="h-5 w-5 text-indigo-500" />
                 <h3 className={`text-xl font-semibold ${currentTheme.text.primary}`}>

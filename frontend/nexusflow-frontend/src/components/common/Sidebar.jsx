@@ -21,30 +21,40 @@ const Sidebar = () => {
       background: {
         primary: 'bg-white',
         secondary: 'bg-gray-50',
-        gradient: 'from-primary-50 to-blue-50'
+        gradient: 'from-primary-50 to-blue-50',
+        active: 'bg-blue-50',
+        hover: 'hover:bg-gray-50'
       },
       border: {
-        primary: 'border-gray-200'
+        primary: 'border-gray-200',
+        active: 'border-blue-600'
       },
       text: {
         primary: 'text-gray-900',
         secondary: 'text-gray-600',
-        tertiary: 'text-gray-500'
+        tertiary: 'text-gray-500',
+        active: 'text-blue-600',
+        hover: 'hover:text-gray-900'
       }
     },
     dark: {
       background: {
         primary: 'bg-gray-800',
         secondary: 'bg-gray-700',
-        gradient: 'from-gray-700 to-gray-800'
+        gradient: 'from-gray-700 to-gray-800',
+        active: 'bg-blue-900/20',
+        hover: 'hover:bg-gray-700/50'
       },
       border: {
-        primary: 'border-gray-700'
+        primary: 'border-gray-700',
+        active: 'border-blue-400'
       },
       text: {
         primary: 'text-white',
         secondary: 'text-gray-400',
-        tertiary: 'text-gray-500'
+        tertiary: 'text-gray-500',
+        active: 'text-blue-400',
+        hover: 'hover:text-white'
       }
     }
   }
@@ -81,17 +91,39 @@ const Sidebar = () => {
             to={item.href}
             className={({ isActive }) =>
               cn(
-                "flex items-center px-3 py-3 rounded-lg transition-colors group",
+                "flex items-center px-3 py-3 rounded-lg transition-all duration-200 group relative",
                 isActive
-                  ? "bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border-r-2 border-primary-600"
-                  : `${currentTheme.text.secondary} hover:${theme === 'light' ? 'bg-gray-50' : 'bg-gray-700/50'} hover:${currentTheme.text.primary}`
+                  ? cn(
+                      currentTheme.background.active,
+                      currentTheme.text.active,
+                      "border-r-2 font-semibold shadow-sm"
+                    )
+                  : cn(
+                      currentTheme.text.secondary,
+                      currentTheme.background.hover,
+                      currentTheme.text.hover
+                    )
               )
             }
           >
-            <item.icon className="h-5 w-5 mr-3" />
+            <item.icon 
+              className={cn(
+                "h-5 w-5 mr-3 transition-colors",
+                ({ isActive }) => isActive ? "text-current" : "text-current"
+              )} 
+            />
             <span className="font-medium">
               {item.name}
             </span>
+            
+            {/* Active indicator dot */}
+            {({ isActive }) => isActive && (
+              <div className={cn(
+                "absolute right-3 top-1/2 transform -translate-y-1/2",
+                "w-2 h-2 rounded-full",
+                theme === 'light' ? 'bg-blue-600' : 'bg-blue-400'
+              )} />
+            )}
           </NavLink>
         ))}
       </nav>
