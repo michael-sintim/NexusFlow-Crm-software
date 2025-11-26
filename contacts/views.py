@@ -71,7 +71,7 @@ def contact_detail(request, pk):
     if user.role != 'admin':
         queryset = queryset.filter(owner=user)
     
-    contact = get_object_or_404(queryset, pk=pk)
+    contact = get_object_or_404(queryset, pk=pk)www
     
     if request.method == 'GET':
         serializer = ContactDetailSerializer(contact)
