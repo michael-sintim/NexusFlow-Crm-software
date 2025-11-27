@@ -75,7 +75,7 @@ def contact_detail(request, pk):
     
     if request.method == 'GET':
         serializer = ContactDetailSerializer(contact)
-        return Response()
+        return Response(serializer.data)
     
     elif request.method in ['PUT', 'PATCH']:
         partial = request.method == 'PATCH'
