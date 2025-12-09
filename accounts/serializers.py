@@ -93,4 +93,4 @@ class LoginSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-         read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'created_at']
