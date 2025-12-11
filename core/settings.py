@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-5_3t)_$hw)g*21rm((gn&sl^^&*vmu%^y*w14zua=5q1zf1zaj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["www.nexusflow360.com"]
 
 
 # Application definition
