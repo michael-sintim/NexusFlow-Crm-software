@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'tasks',
     'calendar_app',
 ]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
